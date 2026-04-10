@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dublin Flight Ideas Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root {
+      --panel: rgba(255,255,255,.8);
+      --panel-border: rgba(255,255,255,.58);
+      --text:#172033;
+      --muted:#5f6b85;
+      --shadow:0 18px 45px rgba(17,24,39,.14);
+      --blue:#3b82f6;
+      --green:#10b981;
+      --red:#ef4444;
+      --purple:#8b5cf6;
+      --pink:#ec4899;
+      --amber:#f59e0b;
+      --cyan:#06b6d4;
+      --violet:#7c3aed;
+      --sun:#f59e0b;
+      --emerald:#059669;
+      --slate:#475569;
+      --rose:#e11d48;
+      --tag:#7c3aed;
+    }
+
+    * { box-sizing:border-box; }
+
+    html,body {
+      margin:0;
+      padding:0;
+      height:100%;
+      font-family:Inter, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left,#dbeafe 0%,transparent 28%),
+        radial-gradient(circle at bottom right,#e9d5ff 0%,transparent 26%),
+        linear-gradient(135deg,#eff6ff 0%,#f8fafc 45%,#eef2ff 100%);
+      color:var(--text);
+    }
+
+    .app {
+      display:grid;
+      grid-template-columns:430px 1fr;
+      height:100vh;
+      gap:14px;
+      padding:14px;
+    }
+
+    .panel {
+      background:var(--panel);
+      backdrop-filter:blur(16px);
+      -webkit-backdrop-filter:blur(16px);
+      border:1px solid var(--panel-border);
+      border-radius:26px;
+      box-shadow:var(--shadow);
+    }
+
+    .sidebar {
+      padding:18px;
+      overflow-y:auto;
+    }
+
+    .eyebrow {
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size:12px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:#36518a;
+      font-weight:700;
+      margin-bottom:10px;
+    }
+
+    .eyebrow .mini-dot {
+      width:8px;
+      height:8px;
+      border-radius:50%;
+      background:linear-gradient(135deg,var(--blue),var(--purple));
+      box-shadow:0 0 0 6px rgba(99,102,241,.08);
+    }
+
+    h1 {
+      margin:0;
+      font-size:30px;
+      line-height:1.08;
+      letter-spacing:-.03em;
+    }
+
+    .sub {
+      margin:10px 0 16px;
+      font-size:14px;
+      line-height:1.6;
+      color:var(--muted);
+    }
+
+    .controls {
+      display:grid;
+      gap:12px;
+      margin-bottom:16px;
+    }
+
+    .box {
+      background:rgba(255,255,255,.74);
+      border:1px solid rgba(226,232,240,.92);
+      border-radius:20px;
+      padding:14px;
+      box-shadow:0 8px 20px rgba(148,163,184,.09);
+    }
+
+    .box-title {
+      font-size:13px;
+      font-weight:800;
+      color:#334155;
+      margin-bottom:10px;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+    }
+
+    .segmented,
+    .filter-buttons,
+    .season-buttons,
+    .budget-presets,
+    .duration-presets,
+    .sort-buttons {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+    }
+
+    .season-buttons { grid-template-columns:repeat(4,1fr); }
+    .filter-buttons { grid-template-columns:1fr 1fr; }
+    .budget-presets,
+    .duration-presets { grid-template-columns:repeat(4,1fr); margin-top:10px; }
+    .sort-buttons { grid-template-columns:1fr 1fr; }
+
+    button,
+    select {
+      border:none;
+      padding:12px 10px;
+      border-radius:14px;
+      font-weight:700;
+      font-size:14px;
+      color:#334155;
+      background:#edf2ff;
+      transition:transform .18s ease, background .18s ease, color .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+
+    button { cursor:pointer; }
+    button:hover { transform:translateY(-1px); }
+    button.active {
+      color:white;
+      background:linear-gradient(135deg,#2563eb,#7c3aed);
+      box-shadow:0 10px 24px rgba(79,70,229,.28);
+    }
+
+    .weekend-highlight-btn.active { background:linear-gradient(135deg,#db2777,#7c3aed); }
+    .direct-toggle-btn.active { background:linear-gradient(135deg,#0891b2,#2563eb); }
+    .budget-preset-btn.active { background:linear-gradient(135deg,#f59e0b,#ea580c); }
+    .duration-preset-btn.active { background:linear-gradient(135deg,#8b5cf6,#4f46e5); }
+    .sort-btn.active { background:linear-gradient(135deg,#0f766e,#2563eb); }
+
+    select {
+      width:100%;
+      border:1px solid #dbe2ea;
+      background:rgba(255,255,255,.96);
+      outline:none;
+      appearance:none;
+    }
+
+    select:focus,
+    .search-input:focus {
+      border-color:#93c5fd;
+      box-shadow:0 0 0 4px rgba(59,130,246,.12);
+    }
+
+    .month-row {
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:10px;
+      align-items:center;
+    }
+
+    .helper {
+      margin-top:10px;
+      font-size:12px;
+      color:#64748b;
+      line-height:1.5;
+    }
+
+    .slider-header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:10px;
+    }
+
+    .slider-value {
+      font-size:14px;
+      font-weight:800;
+      color:#0f172a;
+      background:#eff6ff;
+      border:1px solid #dbeafe;
+      border-radius:999px;
+      padding:8px 12px;
+      white-space:nowrap;
+    }
+
+    input[type="range"] {
+      width:100%;
+      appearance:none;
+      height:8px;
+      border-radius:999px;
+      background:linear-gradient(90deg,#60a5fa,#8b5cf6);
+      outline:none;
+      cursor:pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      appearance:none;
+      width:22px;
+      height:22px;
+      border-radius:50%;
+      background:white;
+      border:3px solid #2563eb;
+      box-shadow:0 4px 14px rgba(37,99,235,.25);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width:22px;
+      height:22px;
+      border-radius:50%;
+      background:white;
+      border:3px solid #2563eb;
+      box-shadow:0 4px 14px rgba(37,99,235,.25);
+    }
+
+    .summary-grid {
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:10px;
+    }
+
+    .summary-pill {
+      padding:10px;
+      border-radius:16px;
+      background:linear-gradient(180deg,rgba(239,246,255,1),rgba(248,250,252,1));
+      border:1px solid #dbeafe;
+    }
+
+    .summary-pill .label {
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      color:#64748b;
+      margin-bottom:4px;
+      font-weight:700;
+    }
+
+    .summary-pill .value {
+      font-size:16px;
+      font-weight:800;
+      color:#0f172a;
+    }
+
+    .legend-scale {
+      height:12px;
+      border-radius:999px;
+      background:linear-gradient(90deg,#22c55e,#f59e0b,#ef4444);
+      margin:12px 0 8px;
+    }
+
+    .legend-range {
+      display:flex;
+      justify-content:space-between;
+      font-size:12px;
+      color:#64748b;
+    }
+
+    .legend-row {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:13px;
+      color:#475569;
+      margin-top:10px;
+    }
+
+    .dot {
+      width:12px;
+      height:12px;
+      border-radius:999px;
+      display:inline-block;
+      border:2px solid rgba(255,255,255,.9);
+      box-shadow:0 0 0 1px rgba(15,23,42,.08);
+    }
+
+    .dot.eu { background:var(--blue); }
+    .dot.non-eu { background:var(--red); }
+    .dot.origin { background:var(--green); }
+    .dot.weekend { background:var(--pink); }
+    .dot.direct { background:var(--cyan); }
+    .dot.budget { background:var(--amber); }
+    .dot.duration { background:var(--violet); }
+    .dot.sort { background:#0f766e; }
+    .dot.weather { background:var(--sun); }
+    .dot.currency { background:var(--emerald); }
+    .dot.timezone { background:var(--slate); }
+    .dot.transfer { background:var(--rose); }
+    .dot.tags { background:var(--tag); }
+    .dot.animated { background:#14b8a6; }
+
+    .route-swatch {
+      width:22px;
+      height:10px;
+      border-radius:999px;
+      display:inline-block;
+      background:linear-gradient(90deg,rgba(59,130,246,.25),rgba(59,130,246,.95));
+      box-shadow:0 0 0 1px rgba(30,64,175,.1);
+    }
+
+    .search-input {
+      width:100%;
+      padding:13px 14px;
+      border-radius:14px;
+      border:1px solid #dbe2ea;
+      outline:none;
+      font-size:14px;
+      background:rgba(255,255,255,.96);
+    }
+
+    .list {
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:16px;
+    }
+
+    .card {
+      border:1px solid rgba(226,232,240,.92);
+      border-radius:18px;
+      padding:14px;
+      background:rgba(255,255,255,.78);
+      box-shadow:0 8px 20px rgba(148,163,184,.08);
+      transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+      cursor:pointer;
+    }
+
+    .card:hover {
+      transform:translateY(-2px);
+      box-shadow:0 12px 28px rgba(148,163,184,.14);
+      border-color:#bfdbfe;
+    }
+
+    .card.hidden { display:none; }
+    .card.weekend-card { border-color:rgba(236,72,153,.25); box-shadow:0 8px 20px rgba(236,72,153,.08); }
+    .card.direct-card { border-left:4px solid rgba(6,182,212,.55); }
+
+    .card-top {
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      margin-bottom:8px;
+    }
+
+    .card h3 {
+      margin:0;
+      font-size:16px;
+      line-height:1.25;
+    }
+
+    .badge-wrap {
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      align-items:flex-end;
+    }
+
+    .badge {
+      padding:6px 9px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:800;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+      white-space:nowrap;
+    }
+
+    .badge.eu { background:#dbeafe; color:#1d4ed8; }
+    .badge.non-eu { background:#fee2e2; color:#b91c1c; }
+    .badge.weekend { background:linear-gradient(135deg,#fce7f3,#ede9fe); color:#be185d; border:1px solid rgba(236,72,153,.18); }
+    .badge.direct { background:linear-gradient(135deg,#ecfeff,#dbeafe); color:#0f766e; border:1px solid rgba(6,182,212,.18); }
+    .badge.indirect { background:linear-gradient(135deg,#fff7ed,#fef2f2); color:#b45309; border:1px solid rgba(245,158,11,.18); }
+    .badge.weather { background:linear-gradient(135deg,#fff7ed,#fde68a); color:#b45309; border:1px solid rgba(245,158,11,.18); }
+    .badge.currency { background:linear-gradient(135deg,#ecfdf5,#d1fae5); color:#065f46; border:1px solid rgba(16,185,129,.18); }
+    .badge.cost-cheap { background:linear-gradient(135deg,#ecfdf5,#d1fae5); color:#065f46; border:1px solid rgba(16,185,129,.18); }
+    .badge.cost-medium { background:linear-gradient(135deg,#fffbeb,#fde68a); color:#92400e; border:1px solid rgba(245,158,11,.18); }
+    .badge.cost-expensive { background:linear-gradient(135deg,#fef2f2,#fecaca); color:#991b1b; border:1px solid rgba(239,68,68,.18); }
+    .badge.timezone { background:linear-gradient(135deg,#f8fafc,#e2e8f0); color:#334155; border:1px solid rgba(100,116,139,.18); }
+    .badge.transfer { background:linear-gradient(135deg,#fff1f2,#fecdd3); color:#9f1239; border:1px solid rgba(225,29,72,.18); }
+    .badge.tag { background:linear-gradient(135deg,#f5f3ff,#ddd6fe); color:#5b21b6; border:1px solid rgba(124,58,237,.18); }
+
+    .meta {
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.65;
+    }
+
+    .meta .month-chip,
+    .meta .sort-chip,
+    .meta .season-chip,
+    .meta .currency-chip,
+    .meta .cost-chip,
+    .meta .timezone-chip,
+    .meta .transfer-chip,
+    .meta .tag-chip {
+      display:inline-block;
+      margin-top:6px;
+      padding:4px 8px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:800;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+    }
+
+    .meta .month-chip { background:#eef2ff; color:#4f46e5; }
+    .meta .sort-chip { margin-left:6px; background:#ecfeff; color:#0f766e; }
+    .meta .season-chip { margin-left:6px; background:#fef3c7; color:#92400e; }
+    .meta .currency-chip { margin-left:6px; background:#ecfdf5; color:#065f46; }
+    .meta .cost-chip.cheapest { margin-left:6px; background:#ecfdf5; color:#065f46; }
+    .meta .cost-chip.medium { margin-left:6px; background:#fffbeb; color:#92400e; }
+    .meta .cost-chip.expensive { margin-left:6px; background:#fef2f2; color:#991b1b; }
+    .meta .timezone-chip { margin-left:6px; background:#f8fafc; color:#334155; }
+    .meta .transfer-chip { margin-left:6px; background:#fff1f2; color:#9f1239; }
+    .meta .tag-chip { margin-left:6px; background:#f5f3ff; color:#5b21b6; }
+
+    .map-shell {
+      position:relative;
+      overflow:hidden;
+    }
+
+    #map {
+      width:100%;
+      height:100%;
+      border-radius:26px;
+    }
+
+    .floating-title {
+      position:absolute;
+      top:18px;
+      right:18px;
+      z-index:600;
+      background:rgba(255,255,255,.8);
+      backdrop-filter:blur(14px);
+      -webkit-backdrop-filter:blur(14px);
+      border:1px solid rgba(255,255,255,.65);
+      box-shadow:var(--shadow);
+      border-radius:18px;
+      padding:12px 14px;
+      min-width:340px;
+    }
+
+    .floating-title .small {
+      font-size:12px;
+      text-transform:uppercase;
+      color:#64748b;
+      letter-spacing:.06em;
+      font-weight:800;
+    }
+
+    .floating-title .big {
+      margin-top:4px;
+      font-size:18px;
+      font-weight:800;
+      color:#0f172a;
+    }
+
+    .leaflet-popup-content-wrapper {
+      border-radius:18px;
+      box-shadow:0 18px 38px rgba(15,23,42,.18);
+    }
+
+    .leaflet-popup-content {
+      margin:14px 15px;
+      min-width:245px;
+    }
+
+    .popup-title {
+      font-size:16px;
+      font-weight:800;
+      margin-bottom:8px;
+      color:#0f172a;
+    }
+
+    .popup-meta {
+      font-size:13px;
+      line-height:1.65;
+      color:#475569;
+    }
+
+    .marker-bubble {
+      border-radius:999px;
+      border:3px solid rgba(255,255,255,.95);
+      box-shadow:0 10px 25px rgba(15,23,42,.22);
+      opacity:.94;
+      position:relative;
+    }
+
+    .marker-bubble.weekend-ring::after {
+      content:'';
+      position:absolute;
+      inset:-5px;
+      border-radius:999px;
+      border:2px solid rgba(236,72,153,.55);
+      pointer-events:none;
+    }
+
+    .marker-bubble.direct-glow::before {
+      content:'';
+      position:absolute;
+      inset:-9px;
+      border-radius:999px;
+      border:2px dashed rgba(6,182,212,.45);
+      pointer-events:none;
+    }
+
+    .route-animate {
+      animation: dashMove 1.6s linear infinite;
+      stroke-linecap: round !important;
+      filter: drop-shadow(0 0 4px rgba(20,184,166,.45));
+    }
+
+    .route-glow-animate {
+      animation: pulseGlow 1.4s ease-in-out infinite;
+    }
+
+    @keyframes dashMove {
+      from { stroke-dashoffset: 0; }
+      to { stroke-dashoffset: -44; }
+    }
+
+    @keyframes pulseGlow {
+      0% { opacity: .45; }
+      50% { opacity: .95; }
+      100% { opacity: .45; }
+    }
+
+    @media (max-width:1150px) {
+      .app {
+        grid-template-columns:1fr;
+        grid-template-rows:1240px 1fr;
+      }
+    }
+
+    @media (max-width:720px) {
+      .app {
+        padding:10px;
+        gap:10px;
+      }
+
+      .sidebar { padding:14px; }
+      h1 { font-size:25px; }
+
+      .summary-grid,
+      .filter-buttons,
+      .segmented,
+      .season-buttons,
+      .budget-presets,
+      .duration-presets,
+      .sort-buttons {
+        grid-template-columns:1fr;
+      }
+
+      .month-row {
+        grid-template-columns:1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar panel">
+      <div class="eyebrow"><span class="mini-dot"></span> Interactive trip explorer</div>
+      <h1>Dublin flight map</h1>
+      <p class="sub">
+        Version 14 adds <strong>animated route lines</strong>, so when you click a destination the flight path becomes more alive and much easier to notice.
+      </p>
+
+      <div class="controls">
+        <div class="box">
+          <div class="box-title">Travel month</div>
+          <div class="month-row">
+            <select id="monthSelect">
+              <option value="jan">January</option>
+              <option value="feb">February</option>
+              <option value="mar">March</option>
+              <option value="apr" selected>April</option>
+              <option value="may">May</option>
+              <option value="jun">June</option>
+              <option value="jul">July</option>
+              <option value="aug">August</option>
+              <option value="sep">September</option>
+              <option value="oct">October</option>
+              <option value="nov">November</option>
+              <option value="dec">December</option>
+            </select>
+            <button id="resetMonth">Reset</button>
+          </div>
+          <div class="helper">Prices shift by month using route-specific seasonality.</div>
+        </div>
+
+        <div class="box">
+          <div class="box-title">Season presets</div>
+          <div class="season-buttons">
+            <button class="season-btn" data-season="spring">Spring</button>
+            <button class="season-btn" data-season="summer">Summer</button>
+            <button class="season-btn" data-season="autumn">Autumn</button>
+            <button class="season-btn" data-season="winter">Winter</button>
+          </div>
+        </div>
+
+        <div class="box">
+          <div class="box-title">Budget slider</div>
+          <div class="slider-header">
+            <span class="helper" style="margin:0;">Show trips under this price</span>
+            <span class="slider-value" id="budgetValue">€700 max</span>
+          </div>
+          <input id="budgetSlider" type="range" min="20" max="700" step="10" value="700" />
+          <div class="budget-presets">
+            <button class="budget-preset-btn" data-budget="80">€80</button>
+            <button class="budget-preset-btn" data-budget="120">€120</button>
+            <button class="budget-preset-btn" data-budget="200">€200</button>
+            <button class="budget-preset-btn active" data-budget="700">No cap</button>
+          </div>
+          <div class="helper">This works alongside the month selector, so the cap applies to the currently selected month’s rough prices.</div>
+        </div>
+
+        <div class="box">
+          <div class="box-title">Max flight time</div>
+          <div class="slider-header">
+            <span class="helper" style="margin:0;">Show trips under this duration</span>
+            <span class="slider-value" id="durationValue">No cap</span>
+          </div>
+          <input id="durationSlider" type="range" min="60" max="800" step="10" value="800" />
+          <div class="duration-presets">
+            <button class="duration-preset-btn" data-duration="120">2h</button>
+            <button class="duration-preset-btn" data-duration="180">3h</button>
+            <button class="duration-preset-btn" data-duration="300">5h</button>
+            <button class="duration-preset-btn active" data-duration="800">No cap</button>
+          </div>
+          <div class="helper">This filters using the route duration data already on the map. It stacks with budget, direct-only and the other filters.</div>
+        </div>
+
+        <div class="box">
+          <div class="box-title">Sort panel</div>
+          <div class="sort-buttons">
+            <button class="sort-btn active" data-sort="cheapest">Cheapest</button>
+            <button class="sort-btn" data-sort="fastest">Fastest</button>
+            <button class="sort-btn" data-sort="bestValue">Best value</button>
+            <button class="sort-btn" data-sort="prettiest">Prettiest city break</button>
+          </div>
+          <div class="helper">Sorting affects the sidebar order. “Best value” combines price, duration, directness and weekend-friendliness. “Prettiest” uses a simple built-in city-break beauty score.</div>
+        </div>
+
+        <div class="box">
+          <div class="box-title">Bubble mode</div>
+          <div class="segmented">
+            <button id="modePrice" class="active">Price mode</button>
+            <button id="modeDuration">Duration mode</button>
+          </div>
+        </div>
+
+        <div class="box">
+          <div class="box-title">Flight paths</div>
+          <div class="segmented">
+            <button id="pathsOn" class="active">All paths on</button>
+            <button id="pathsOff">All paths off</button>
+          </div>
+        </div>
+
+        <div class="box">
+          <div class="box-title">Direct flights</div>
+          <div class="segmented">
+            <button id="directOff" class="active direct-toggle-btn">Show all routes</button>
+            <button id="directOn" class="direct-toggle-btn">Direct only</button>
+          </div>
+          <div class="helper">When direct only is on, routes with stops are hidden from both the map and the sidebar.</div>
+        </div>
+
+        <div class="box">
+          <div class="box-title">Filters</div>
+          <div class="filter-buttons">
+            <button class="filter-btn active" data-filter="all">All trips</button>
+            <button class="filter-btn" data-filter="europe">Europe only</button>
+            <button class="filter-btn" data-filter="asia">Asia only</button>
+            <button class="filter-btn" data-filter="cheap">Cheap trips</button>
+            <button class="filter-btn" data-filter="quick">Quick flights</button>
+            <button class="filter-btn weekend-highlight-btn" data-filter="weekend">Weekend mode</button>
+          </div>
+          <div class="helper">Weekend mode shows places that are better suited to a short Friday-Sunday break.</div>
+        </div>
+
+        <div class="box">
+          <div class="box-title">Find a destination</div>
+          <input id="searchInput" class="search-input" type="text" placeholder="Search Venice, Seoul, Lisbon..." />
+        </div>
+
+        <div class="box">
+          <div class="box-title">Quick view</div>
+          <div class="summary-grid">
+            <div class="summary-pill">
+              <div class="label">Visible trips</div>
+              <div class="value" id="countValue">0</div>
+            </div>
+            <div class="summary-pill">
+              <div class="label">Cheapest</div>
+              <div class="value" id="cheapestValue">—</div>
+            </div>
+            <div class="summary-pill">
+              <div class="label">Fastest</div>
+              <div class="value" id="fastestValue">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="box">
+          <div class="box-title">Legend</div>
+          <div id="legendTitle" style="font-size:13px;color:#475569;font-weight:700;">Colour and size currently show price</div>
+          <div class="legend-scale"></div>
+          <div class="legend-range">
+            <span id="legendMin">Cheaper / shorter</span>
+            <span id="legendMax">Pricier / longer</span>
+          </div>
+
+          <div class="legend-row"><span class="dot origin"></span> Dublin origin</div>
+          <div class="legend-row"><span class="dot eu"></span> Europe destination</div>
+          <div class="legend-row"><span class="dot non-eu"></span> Outside Europe destination</div>
+          <div class="legend-row"><span class="dot weekend"></span> Weekend-friendly place</div>
+          <div class="legend-row"><span class="dot direct"></span> Direct route marker accent</div>
+          <div class="legend-row"><span class="dot budget"></span> Budget-limited view</div>
+          <div class="legend-row"><span class="dot.duration"></span> Duration-limited view</div>
+          <div class="legend-row"><span class="dot.sort"></span> Sorted sidebar order</div>
+          <div class="legend-row"><span class="dot.weather"></span> Best season / weather badge</div>
+          <div class="legend-row"><span class="dot.currency"></span> Currency / cost-level badge</div>
+          <div class="legend-row"><span class="dot.timezone"></span> Timezone difference badge</div>
+          <div class="legend-row"><span class="dot.transfer"></span> Airport transfer note</div>
+          <div class="legend-row"><span class="dot.tags"></span> Trip type tags</div>
+          <div class="legend-row"><span class="dot.animated"></span> Animated selected route</div>
+          <div class="legend-row"><span class="route-swatch"></span> Route line</div>
+        </div>
+      </div>
+
+      <div class="list" id="destinationList"></div>
+    </aside>
+
+    <main class="map-shell panel">
+      <div class="floating-title">
+        <div class="small">Map mode</div>
+        <div class="big" id="floatingMode">April · price mode · all paths on</div>
+      </div>
+      <div id="map"></div>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const months = [
+      { key:'jan', label:'January' },
+      { key:'feb', label:'February' },
+      { key:'mar', label:'March' },
+      { key:'apr', label:'April' },
+      { key:'may', label:'May' },
+      { key:'jun', label:'June' },
+      { key:'jul', label:'July' },
+      { key:'aug', label:'August' },
+      { key:'sep', label:'September' },
+      { key:'oct', label:'October' },
+      { key:'nov', label:'November' },
+      { key:'dec', label:'December' }
+    ];
+
+    const seasonToMonth = {
+      spring:'apr',
+      summer:'jul',
+      autumn:'oct',
+      winter:'jan'
+    };
+
+    const dublin = {
+      name:'Dublin',
+      coords:[53.3498,-6.2603]
+    };
+
+    const destinations = [
+      { name:'London', coords:[51.5072,-0.1276], basePrice:85, durationLabel:'1h 24m', durationMinutes:84, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:7, weatherTag:'Mild city weather', bestSeason:'Spring / Autumn', currency:'GBP (£)', costLevel:'Medium', timezoneDiff:'Same as Dublin', airportTransfer:'Fast rail / tube links, city in ~30–45 mins', tags:['Nightlife','Food','Culture'], note:'Direct', monthFactors:{apr:1.0,may:1.0,jun:1.1,jul:1.25,aug:1.28,sep:1.08,oct:1.02,nov:0.95,dec:1.18,jan:0.9,feb:0.92,mar:0.98}, cheapestMonths:['jan','feb','apr'] },
+      { name:'Paris', coords:[48.8566,2.3522], basePrice:103, durationLabel:'1h 50m', durationMinutes:110, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:10, weatherTag:'Mild / romantic weather', bestSeason:'Spring', currency:'EUR (€)', costLevel:'Expensive', timezoneDiff:'+1 hour', airportTransfer:'Train / RER into centre, usually ~35–50 mins', tags:['Romantic','Food','Culture'], note:'Direct / route-based', monthFactors:{apr:1.0,may:1.04,jun:1.1,jul:1.22,aug:1.26,sep:1.08,oct:1.0,nov:0.95,dec:1.16,jan:0.92,feb:0.94,mar:0.98}, cheapestMonths:['jan','feb','apr'] },
+      { name:'Amsterdam (Netherlands)', coords:[52.3676,4.9041], basePrice:64, durationLabel:'1h 39m', durationMinutes:99, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:8, weatherTag:'Cool canals weather', bestSeason:'Spring / Summer', currency:'EUR (€)', costLevel:'Expensive', timezoneDiff:'+1 hour', airportTransfer:'Excellent rail, centre in ~15–25 mins', tags:['Nightlife','Culture','Food'], note:'Direct', monthFactors:{apr:1.0,may:1.03,jun:1.08,jul:1.18,aug:1.22,sep:1.07,oct:1.0,nov:0.94,dec:1.14,jan:0.9,feb:0.92,mar:0.97}, cheapestMonths:['jan','feb','apr'] },
+      { name:'Luxembourg', coords:[49.6116,6.1319], basePrice:22, durationLabel:'1h 55m', durationMinutes:115, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:5, weatherTag:'Cool / crisp weather', bestSeason:'Spring / Autumn', currency:'EUR (€)', costLevel:'Expensive', timezoneDiff:'+1 hour', airportTransfer:'Short transfer, centre often ~15–25 mins', tags:['Culture','Quiet'], note:'Direct', monthFactors:{apr:1.0,may:1.02,jun:1.08,jul:1.16,aug:1.18,sep:1.06,oct:1.0,nov:0.95,dec:1.12,jan:0.9,feb:0.92,mar:0.97}, cheapestMonths:['jan','feb','apr'] },
+      { name:'Milan', coords:[45.4642,9.19], basePrice:36, durationLabel:'2h 32m–2h 35m', durationMinutes:154, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:8, weatherTag:'Warm city weather', bestSeason:'Spring / Autumn', currency:'EUR (€)', costLevel:'Medium', timezoneDiff:'+1 hour', airportTransfer:'Airport train / bus, usually ~35–60 mins', tags:['Fashion','Food','Nightlife'], note:'Direct', monthFactors:{apr:1.0,may:1.06,jun:1.12,jul:1.3,aug:1.34,sep:1.12,oct:1.02,nov:0.96,dec:1.14,jan:0.94,feb:0.95,mar:0.98}, cheapestMonths:['apr','jan'] },
+      { name:'Berlin', coords:[52.52,13.405], basePrice:40.5, durationLabel:'2h 15m–2h 19m', durationMinutes:137, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:7, weatherTag:'Cool urban weather', bestSeason:'Late Spring / Summer', currency:'EUR (€)', costLevel:'Medium', timezoneDiff:'+1 hour', airportTransfer:'Good rail links, centre in ~30–40 mins', tags:['Nightlife','Culture','Food'], note:'Direct', monthFactors:{apr:1.0,may:1.04,jun:1.09,jul:1.18,aug:1.2,sep:1.06,oct:1.0,nov:0.95,dec:1.14,jan:0.91,feb:0.93,mar:0.98}, cheapestMonths:['jan','feb','apr'] },
+      { name:'Stockholm (Sweden)', coords:[59.3293,18.0686], basePrice:34, durationLabel:'2h 35m', durationMinutes:155, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:8, weatherTag:'Cool Nordic weather', bestSeason:'Summer', currency:'SEK (kr)', costLevel:'Expensive', timezoneDiff:'+1 hour', airportTransfer:'Express train or bus, centre around ~20–40 mins', tags:['Culture','Food','Design'], note:'Direct', monthFactors:{apr:1.0,may:1.02,jun:1.08,jul:1.16,aug:1.18,sep:1.05,oct:0.98,nov:0.95,dec:1.12,jan:0.93,feb:0.95,mar:0.98}, cheapestMonths:['apr','may'] },
+      { name:'Vienna', coords:[48.2082,16.3738], basePrice:65, durationLabel:'2h 49m', durationMinutes:169, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:8, weatherTag:'Elegant mild weather', bestSeason:'Spring / Winter markets', currency:'EUR (€)', costLevel:'Medium', timezoneDiff:'+1 hour', airportTransfer:'City train / rail, often ~20–30 mins', tags:['Culture','Romantic','Food'], note:'Direct', monthFactors:{apr:1.0,may:1.04,jun:1.1,jul:1.21,aug:1.23,sep:1.08,oct:1.02,nov:0.96,dec:1.15,jan:0.92,feb:0.94,mar:0.98}, cheapestMonths:['jan','feb','apr'] },
+      { name:'Venice', coords:[45.4408,12.3155], basePrice:42, durationLabel:'2h 41m', durationMinutes:161, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:10, weatherTag:'Warm lagoon weather', bestSeason:'Spring / Early Autumn', currency:'EUR (€)', costLevel:'Expensive', timezoneDiff:'+1 hour', airportTransfer:'Boat / bus combo, usually ~30–50 mins to main areas', tags:['Romantic','Culture','Food'], note:'Direct', monthFactors:{apr:1.0,may:1.07,jun:1.13,jul:1.28,aug:1.34,sep:1.11,oct:1.03,nov:0.97,dec:1.15,jan:0.94,feb:0.95,mar:0.99}, cheapestMonths:['apr','may'] },
+      { name:'Lisbon', coords:[38.7223,-9.1393], basePrice:62, durationLabel:'2h 54m', durationMinutes:174, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:9, weatherTag:'Sunny / warm weather', bestSeason:'Spring / Autumn', currency:'EUR (€)', costLevel:'Medium', timezoneDiff:'Same as Dublin', airportTransfer:'Metro / taxi, centre in ~20–30 mins', tags:['Food','Nightlife','Culture'], note:'Direct', monthFactors:{apr:1.0,may:1.04,jun:1.1,jul:1.22,aug:1.28,sep:1.12,oct:1.04,nov:0.97,dec:1.14,jan:0.92,feb:0.93,mar:0.98}, cheapestMonths:['may','jan'] },
+      { name:'Budapest', coords:[47.4979,19.0402], basePrice:80, durationLabel:'3h 04m', durationMinutes:184, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:8, weatherTag:'Warm city / spa weather', bestSeason:'Spring / Autumn', currency:'HUF (Ft)', costLevel:'Cheap', timezoneDiff:'+1 hour', airportTransfer:'Bus / taxi, centre usually ~35–50 mins', tags:['Nightlife','Food','Culture'], note:'Direct', monthFactors:{apr:1.0,may:1.04,jun:1.11,jul:1.2,aug:1.23,sep:1.08,oct:1.01,nov:0.96,dec:1.14,jan:0.93,feb:0.94,mar:0.98}, cheapestMonths:['apr','jan'] },
+      { name:'Rome', coords:[41.9028,12.4964], basePrice:76, durationLabel:'3h 07m', durationMinutes:187, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:10, weatherTag:'Warm historic weather', bestSeason:'Spring / Autumn', currency:'EUR (€)', costLevel:'Medium', timezoneDiff:'+1 hour', airportTransfer:'Train / coach, centre often ~35–50 mins', tags:['Culture','Food','Romantic'], note:'Direct', monthFactors:{apr:1.0,may:1.05,jun:1.12,jul:1.28,aug:1.34,sep:1.11,oct:1.03,nov:0.97,dec:1.15,jan:0.93,feb:0.94,mar:0.98}, cheapestMonths:['apr','jan'] },
+      { name:'Naples / Amalfi Coast', coords:[40.8518,14.2681], basePrice:81, durationLabel:'3h 17m', durationMinutes:197, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:9, weatherTag:'Sunny coastal weather', bestSeason:'Spring / Early Autumn', currency:'EUR (€)', costLevel:'Medium', timezoneDiff:'+1 hour', airportTransfer:'Naples centre ~20–30 mins, Amalfi area longer by coach / ferry', tags:['Beach','Food','Romantic'], note:'Fly to Naples for Amalfi Coast', monthFactors:{apr:1.0,may:1.08,jun:1.15,jul:1.32,aug:1.38,sep:1.14,oct:1.05,nov:0.98,dec:1.15,jan:0.93,feb:0.94,mar:0.98}, cheapestMonths:['apr','jan'] },
+      { name:'Monaco', coords:[43.7384,7.4246], basePrice:41, durationLabel:'2h 40m', durationMinutes:160, europe:true, asia:false, direct:false, weekendFriendly:true, prettyScore:9, weatherTag:'Sunny Riviera weather', bestSeason:'Spring / Summer', currency:'EUR (€)', costLevel:'Expensive', timezoneDiff:'+1 hour', airportTransfer:'Usually via Nice, then train / taxi ~40–60 mins onward', tags:['Romantic','Luxury','Beach'], note:'Usually via Nice / Monte Carlo area', monthFactors:{apr:1.0,may:1.07,jun:1.15,jul:1.3,aug:1.35,sep:1.13,oct:1.03,nov:0.97,dec:1.12,jan:0.93,feb:0.94,mar:0.98}, cheapestMonths:['apr','jan'] },
+      { name:'Interlaken', coords:[46.6863,7.8632], basePrice:650, durationLabel:'Swiss connection route', durationMinutes:260, europe:true, asia:false, direct:false, weekendFriendly:false, prettyScore:8, weatherTag:'Alpine mountain weather', bestSeason:'Summer / Winter', currency:'CHF', costLevel:'Expensive', timezoneDiff:'+1 hour', airportTransfer:'Usually rail connection after landing, allow ~2+ hours onward', tags:['Scenic','Adventure','Nature'], note:'Usually via Bern', monthFactors:{apr:1.0,may:1.05,jun:1.12,jul:1.2,aug:1.23,sep:1.08,oct:1.02,nov:0.98,dec:1.2,jan:1.1,feb:1.1,mar:1.02}, cheapestMonths:['apr','nov'] },
+      { name:'Zermatt', coords:[46.0207,7.7491], basePrice:300, durationLabel:'not a standard direct city flight', durationMinutes:250, europe:true, asia:false, direct:false, weekendFriendly:false, prettyScore:9, weatherTag:'High alpine weather', bestSeason:'Winter / Summer', currency:'CHF', costLevel:'Expensive', timezoneDiff:'+1 hour', airportTransfer:'Airport + train combo, usually a long onward journey', tags:['Ski','Luxury','Scenic'], note:'Usually via Sion or another Swiss airport', monthFactors:{apr:1.0,may:1.03,jun:1.1,jul:1.18,aug:1.2,sep:1.08,oct:1.03,nov:1.05,dec:1.22,jan:1.18,feb:1.16,mar:1.05}, cheapestMonths:['apr','may'] },
+      { name:'St. Moritz', coords:[46.4908,9.8355], basePrice:320, durationLabel:'non-direct Swiss routing', durationMinutes:255, europe:true, asia:false, direct:false, weekendFriendly:false, prettyScore:9, weatherTag:'Luxury alpine weather', bestSeason:'Winter / Summer', currency:'CHF', costLevel:'Expensive', timezoneDiff:'+1 hour', airportTransfer:'Usually requires rail / road connection after landing', tags:['Ski','Luxury','Scenic'], note:'Usually via St. Moritz Samedan or nearby Swiss airports', monthFactors:{apr:1.0,may:1.03,jun:1.1,jul:1.18,aug:1.2,sep:1.08,oct:1.03,nov:1.08,dec:1.24,jan:1.2,feb:1.18,mar:1.06}, cheapestMonths:['apr','may'] },
+      { name:'Bangkok (Thailand)', coords:[13.7563,100.5018], basePrice:424.5, durationLabel:'usually 1+ stop', durationMinutes:720, europe:false, asia:true, direct:false, weekendFriendly:false, prettyScore:8, weatherTag:'Hot tropical weather', bestSeason:'Winter', currency:'THB (฿)', costLevel:'Cheap', timezoneDiff:'+7 hours', airportTransfer:'Airport rail / taxi, central areas often ~35–60 mins', tags:['Nightlife','Food','Culture'], note:'No direct flight result found', monthFactors:{apr:1.0,may:1.04,jun:1.08,jul:1.16,aug:1.18,sep:1.08,oct:1.0,nov:0.96,dec:1.28,jan:1.22,feb:1.12,mar:1.02}, cheapestMonths:['nov','apr'] },
+      { name:'Seoul (Korea)', coords:[37.5665,126.978], basePrice:468, durationLabel:'usually 1+ stop', durationMinutes:780, europe:false, asia:true, direct:false, weekendFriendly:false, prettyScore:7, weatherTag:'Four-season city weather', bestSeason:'Spring / Autumn', currency:'KRW (₩)', costLevel:'Medium', timezoneDiff:'+9 hours', airportTransfer:'Airport express / metro, central areas often ~45–70 mins', tags:['Food','Nightlife','Culture'], note:'No direct flight result found', monthFactors:{apr:1.0,may:1.02,jun:1.08,jul:1.16,aug:1.18,sep:1.08,oct:1.0,nov:0.96,dec:1.2,jan:1.14,feb:1.08,mar:1.0}, cheapestMonths:['apr','nov'] },
+      { name:'Hong Kong', coords:[22.3193,114.1694], basePrice:474, durationLabel:'usually 1+ stop', durationMinutes:780, europe:false, asia:true, direct:false, weekendFriendly:false, prettyScore:8, weatherTag:'Humid subtropical weather', bestSeason:'Autumn / Winter', currency:'HKD ($)', costLevel:'Expensive', timezoneDiff:'+8 hours', airportTransfer:'Airport express is strong, city in ~25–35 mins', tags:['Food','Nightlife','Culture'], note:'No direct flight result found', monthFactors:{apr:1.0,may:1.02,jun:1.08,jul:1.14,aug:1.16,sep:1.08,oct:1.0,nov:0.96,dec:1.22,jan:1.16,feb:1.08,mar:1.0}, cheapestMonths:['may','nov'] },
+      { name:'Shanghai', coords:[31.2304,121.4737], basePrice:544, durationLabel:'usually 1+ stop', durationMinutes:730, europe:false, asia:true, direct:false, weekendFriendly:false, prettyScore:7, weatherTag:'Big-city seasonal weather', bestSeason:'Spring / Autumn', currency:'CNY (¥)', costLevel:'Medium', timezoneDiff:'+8 hours', airportTransfer:'Maglev / metro / taxi, centre often ~35–60 mins', tags:['Food','Nightlife','Culture'], note:'No direct flight result found', monthFactors:{apr:1.0,may:1.03,jun:1.08,jul:1.14,aug:1.16,sep:1.08,oct:1.0,nov:0.94,dec:1.22,jan:1.16,feb:1.08,mar:1.0}, cheapestMonths:['nov','apr'] },
+      { name:'Chongqing', coords:[29.4316,106.9123], basePrice:607, durationLabel:'usually 1+ stop', durationMinutes:760, europe:false, asia:true, direct:false, weekendFriendly:false, prettyScore:6, weatherTag:'Humid / dramatic weather', bestSeason:'Autumn', currency:'CNY (¥)', costLevel:'Cheap', timezoneDiff:'+8 hours', airportTransfer:'Metro / taxi possible, centre usually ~30–50 mins', tags:['Food','Culture','Adventure'], note:'Assuming your list meant Chongqing', monthFactors:{apr:1.0,may:1.03,jun:1.08,jul:1.13,aug:1.15,sep:1.07,oct:1.0,nov:0.95,dec:1.22,jan:1.15,feb:1.08,mar:1.0}, cheapestMonths:['nov','apr'] }
+    ];
+
+    let currentMonth = 'apr';
+    let mode = 'price';
+    let pathMode = 'all';
+    let activeFilter = 'all';
+    let directOnly = false;
+    let budgetMax = 700;
+    let durationMax = 800;
+    let sortMode = 'cheapest';
+    let activeMarkerName = null;
+
+    const map = L.map('map', { worldCopyJump:true, minZoom:2 }).setView([43,18], 4);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom:19,
+      attribution:'&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    function monthLabel(key) {
+      return months.find(m => m.key === key)?.label || key;
+    }
+
+    function formatDuration(minutes) {
+      if (minutes >= 800) return 'No cap';
+      const hrs = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      return `${hrs}h ${String(mins).padStart(2,'0')}m max`;
+    }
+
+    function getCurrentPrice(dest) {
+      const factor = dest.monthFactors?.[currentMonth] ?? 1;
+      return Math.round(dest.basePrice * factor);
+    }
+
+    function currentPriceLabel(dest) {
+      return `from €${getCurrentPrice(dest)} return`;
+    }
+
+    function cheapestMonthLabel(dest) {
+      return (dest.cheapestMonths || []).map(monthLabel).join(' / ');
+    }
+
+    function interpolateColor(ratio) {
+      const hue = 120 - (120 * ratio);
+      return `hsl(${hue}, 78%, 52%)`;
+    }
+
+    function getModeValue(dest) {
+      return mode === 'price' ? getCurrentPrice(dest) : dest.durationMinutes;
+    }
+
+    function getExtents(visibleDestinations = destinations) {
+      const values = visibleDestinations.map(getModeValue);
+      return {
+        min: Math.min(...values),
+        max: Math.max(...values)
+      };
+    }
+
+    function getBubbleStyle(dest, visibleDestinations = destinations) {
+      const {min, max} = getExtents(visibleDestinations);
+      const raw = getModeValue(dest);
+      const ratio = max === min ? .5 : (raw - min) / (max - min);
+
+      return {
+        size: 16 + ratio * 28,
+        color: interpolateColor(ratio)
+      };
+    }
+
+    function makeCircleIcon(size, color, weekendFriendly, direct) {
+      return L.divIcon({
+        className:'',
+        html:`<div class="marker-bubble ${weekendFriendly ? 'weekend-ring' : ''} ${direct ? 'direct-glow' : ''}" style="width:${size}px;height:${size}px;background:${color};"></div>`,
+        iconSize:[size,size],
+        iconAnchor:[size/2,size/2]
+      });
+    }
+
+    function getBestValueScore(dest) {
+      const priceScore = 700 - getCurrentPrice(dest);
+      const durationScore = 800 - dest.durationMinutes;
+      const directBonus = dest.direct ? 120 : 0;
+      const weekendBonus = dest.weekendFriendly ? 80 : 0;
+      const prettyBonus = dest.prettyScore * 8;
+      return priceScore + durationScore + directBonus + weekendBonus + prettyBonus;
+    }
+
+    function getSortChipLabel(dest) {
+      switch (sortMode) {
+        case 'cheapest': return `€${getCurrentPrice(dest)}`;
+        case 'fastest': return dest.durationLabel;
+        case 'bestValue': return `Value ${Math.round(getBestValueScore(dest))}`;
+        case 'prettiest': return `Beauty ${dest.prettyScore}/10`;
+        default: return '';
+      }
+    }
+
+    function sortEntries(entries) {
+      const cloned = [...entries];
+      switch (sortMode) {
+        case 'cheapest': return cloned.sort((a,b) => getCurrentPrice(a.dest) - getCurrentPrice(b.dest));
+        case 'fastest': return cloned.sort((a,b) => a.dest.durationMinutes - b.dest.durationMinutes);
+        case 'bestValue': return cloned.sort((a,b) => getBestValueScore(b.dest) - getBestValueScore(a.dest));
+        case 'prettiest': return cloned.sort((a,b) => b.dest.prettyScore - a.dest.prettyScore);
+        default: return cloned;
+      }
+    }
+
+    function popupHtml(dest) {
+      return `
+        <div class="popup-title">${dest.name}</div>
+        <div class="popup-meta">
+          <strong>Selected month:</strong> ${monthLabel(currentMonth)}<br>
+          <strong>Rough return price:</strong> ${currentPriceLabel(dest)}<br>
+          <strong>Flight time:</strong> ${dest.durationLabel}<br>
+          <strong>Best season:</strong> ${dest.bestSeason}<br>
+          <strong>Weather vibe:</strong> ${dest.weatherTag}<br>
+          <strong>Currency:</strong> ${dest.currency}<br>
+          <strong>Rough cost level:</strong> ${dest.costLevel}<br>
+          <strong>Timezone difference:</strong> ${dest.timezoneDiff}<br>
+          <strong>Airport transfer:</strong> ${dest.airportTransfer}<br>
+          <strong>Trip tags:</strong> ${dest.tags.join(', ')}<br>
+          <strong>Flight type:</strong> ${dest.direct ? 'Direct' : 'Needs stop / connection'}<br>
+          <strong>Cheapest months:</strong> ${cheapestMonthLabel(dest)}<br>
+          <strong>Weekend trip:</strong> ${dest.weekendFriendly ? 'Yes — good Friday-Sunday option' : 'Not ideal for a short weekend'}<br>
+          <strong>Budget test:</strong> ${getCurrentPrice(dest) <= budgetMax ? `Within €${budgetMax}` : `Over €${budgetMax}`}<br>
+          <strong>Duration test:</strong> ${dest.durationMinutes <= durationMax ? `Within ${formatDuration(durationMax)}` : `Over ${formatDuration(durationMax)}`}<br>
+          <strong>Best value score:</strong> ${Math.round(getBestValueScore(dest))}<br>
+          <strong>Prettiest score:</strong> ${dest.prettyScore}/10<br>
+          <strong>Region:</strong> ${dest.europe ? 'Europe' : 'Outside Europe'}<br>
+          <strong>Note:</strong> ${dest.note}
+        </div>
+      `;
+    }
+
+    function createRouteLine(dest) {
+      const isAsia = dest.asia;
+
+      const glow = L.polyline([dublin.coords, dest.coords], {
+        color:isAsia ? 'rgba(239,68,68,0.30)' : 'rgba(37,99,235,0.28)',
+        weight:11,
+        opacity:.8,
+        lineCap:'round'
+      }).addTo(map);
+
+      const core = L.polyline([dublin.coords, dest.coords], {
+        color:isAsia ? '#ef4444' : '#2563eb',
+        weight:4,
+        opacity:.95,
+        dashArray:'12,10',
+        lineCap:'round'
+      }).addTo(map);
+
+      return { glow, core };
+    }
+
+    function hideRoute(route) {
+      map.removeLayer(route.glow);
+      map.removeLayer(route.core);
+    }
+
+    function showRoute(route) {
+      route.glow.addTo(map);
+      route.core.addTo(map);
+    }
+
+    function setRouteVisibility(entry, visible) {
+      visible ? showRoute(entry.route) : hideRoute(entry.route);
+    }
+
+    function clearRouteAnimation(entry) {
+      if (entry.route.core && entry.route.core._path) {
+        entry.route.core._path.classList.remove('route-animate');
+      }
+      if (entry.route.glow && entry.route.glow._path) {
+        entry.route.glow._path.classList.remove('route-glow-animate');
+      }
+    }
+
+    function clearAllRouteAnimations() {
+      layers.forEach(clearRouteAnimation);
+    }
+
+    function animateRoute(entry) {
+      clearAllRouteAnimations();
+      if (entry.route.core && entry.route.core._path) {
+        entry.route.core._path.classList.add('route-animate');
+      }
+      if (entry.route.glow && entry.route.glow._path) {
+        entry.route.glow._path.classList.add('route-glow-animate');
+      }
+    }
+
+    const bounds = [];
+    const layers = [];
+
+    L.marker(dublin.coords, {
+      icon:L.divIcon({
+        className:'',
+        html:`<div class="marker-bubble" style="width:18px;height:18px;background:var(--green);"></div>`,
+        iconSize:[18,18],
+        iconAnchor:[9,9]
+      })
+    }).addTo(map).bindPopup(`
+      <div class="popup-title">Dublin</div>
+      <div class="popup-meta">Origin point for all routes on this map.</div>
+    `);
+
+    const list = document.getElementById('destinationList');
+    const countValue = document.getElementById('countValue');
+    const cheapestValue = document.getElementById('cheapestValue');
+    const fastestValue = document.getElementById('fastestValue');
+    const legendTitle = document.getElementById('legendTitle');
+    const legendMin = document.getElementById('legendMin');
+    const legendMax = document.getElementById('legendMax');
+    const floatingMode = document.getElementById('floatingMode');
+    const searchInput = document.getElementById('searchInput');
+    const monthSelect = document.getElementById('monthSelect');
+    const budgetSlider = document.getElementById('budgetSlider');
+    const budgetValue = document.getElementById('budgetValue');
+    const durationSlider = document.getElementById('durationSlider');
+    const durationValue = document.getElementById('durationValue');
+
+    destinations.forEach(dest => {
+      const route = createRouteLine(dest);
+      const marker = L.marker(dest.coords, {
+        icon:makeCircleIcon(18, '#3b82f6', dest.weekendFriendly, dest.direct)
+      }).addTo(map);
+
+      marker.bindPopup(popupHtml(dest));
+
+      const primaryTag = dest.tags[0] || 'Trip';
+      const secondaryTag = dest.tags[1] || '';
+
+      const card = document.createElement('div');
+      card.className = `card ${dest.weekendFriendly ? 'weekend-card' : ''} ${dest.direct ? 'direct-card' : ''}`;
+      card.innerHTML = `
+        <div class="card-top">
+          <h3>${dest.name}</h3>
+          <div class="badge-wrap">
+            <span class="badge ${dest.europe ? 'eu' : 'non-eu'}">${dest.europe ? 'Europe' : 'Outside Europe'}</span>
+            <span class="badge ${dest.direct ? 'direct' : 'indirect'}">${dest.direct ? 'Direct' : 'Stops'}</span>
+            ${dest.weekendFriendly ? `<span class="badge weekend">Weekend-friendly</span>` : ``}
+            <span class="badge weather">${dest.bestSeason}</span>
+            <span class="badge currency">${dest.currency}</span>
+            <span class="badge cost-${dest.costLevel.toLowerCase()}">${dest.costLevel}</span>
+            <span class="badge timezone">${dest.timezoneDiff}</span>
+            <span class="badge transfer">Transfer</span>
+            <span class="badge tag">${primaryTag}</span>
+            ${secondaryTag ? `<span class="badge tag">${secondaryTag}</span>` : ``}
+          </div>
+        </div>
+        <div class="meta">
+          <strong class="price-value"></strong><br>
+          <span>${dest.durationLabel}</span><br>
+          ${dest.weatherTag}<br>
+          ${dest.airportTransfer}<br>
+          ${dest.note}<br>
+          <span class="month-chip">Best: ${cheapestMonthLabel(dest)}</span>
+          <span class="season-chip">${dest.bestSeason}</span>
+          <span class="currency-chip">${dest.currency}</span>
+          <span class="cost-chip ${dest.costLevel.toLowerCase()}">${dest.costLevel}</span>
+          <span class="timezone-chip">${dest.timezoneDiff}</span>
+          <span class="transfer-chip">Transfer info</span>
+          <span class="tag-chip">${primaryTag}</span>
+          ${secondaryTag ? `<span class="tag-chip">${secondaryTag}</span>` : ``}
+          <span class="sort-chip"></span>
+        </div>
+      `;
+
+      const entry = { dest, marker, route, card };
+      layers.push(entry);
+      list.appendChild(card);
+      bounds.push(dest.coords);
+
+      marker.on('click', () => {
+        activeMarkerName = dest.name;
+        if (pathMode === 'off') updatePathVisibility();
+        map.fitBounds([dublin.coords, dest.coords], { padding:[60,60] });
+        marker.openPopup();
+        animateRoute(entry);
+      });
+
+      marker.on('popupclose', () => {
+        clearRouteAnimation(entry);
+        if (pathMode === 'off' && activeMarkerName === dest.name) {
+          activeMarkerName = null;
+          updatePathVisibility();
+        }
+      });
+
+      card.addEventListener('click', () => {
+        activeMarkerName = dest.name;
+        if (pathMode === 'off') updatePathVisibility();
+        map.setView(dest.coords, dest.europe ? 5 : 4);
+        marker.openPopup();
+        animateRoute(entry);
+      });
+    });
+
+    map.on('click', () => {
+      if (pathMode === 'off' && activeMarkerName) {
+        activeMarkerName = null;
+        clearAllRouteAnimations();
+        updatePathVisibility();
+      }
+    });
+
+    function destinationMatchesFilter(dest) {
+      switch(activeFilter) {
+        case 'europe': return dest.europe;
+        case 'asia': return dest.asia;
+        case 'cheap': return getCurrentPrice(dest) <= 80;
+        case 'quick': return dest.durationMinutes <= 180;
+        case 'weekend': return dest.weekendFriendly;
+        default: return true;
+      }
+    }
+
+    function destinationMatchesSearch(dest) {
+      const term = searchInput.value.trim().toLowerCase();
+      return !term || dest.name.toLowerCase().includes(term);
+    }
+
+    function destinationMatchesDirect(dest) {
+      return !directOnly || dest.direct;
+    }
+
+    function destinationMatchesBudget(dest) {
+      return getCurrentPrice(dest) <= budgetMax;
+    }
+
+    function destinationMatchesDuration(dest) {
+      return dest.durationMinutes <= durationMax;
+    }
+
+    function isEntryVisible(entry) {
+      return (
+        destinationMatchesFilter(entry.dest) &&
+        destinationMatchesSearch(entry.dest) &&
+        destinationMatchesDirect(entry.dest) &&
+        destinationMatchesBudget(entry.dest) &&
+        destinationMatchesDuration(entry.dest)
+      );
+    }
+
+    function getVisibleEntries() {
+      return layers.filter(isEntryVisible);
+    }
+
+    function updateBudgetUI() {
+      budgetValue.textContent = budgetMax >= 700 ? 'No cap' : `€${budgetMax} max`;
+      document.querySelectorAll('.budget-preset-btn').forEach(btn => {
+        btn.classList.toggle('active', Number(btn.dataset.budget) === budgetMax);
+      });
+    }
+
+    function updateDurationUI() {
+      durationValue.textContent = durationMax >= 800 ? 'No cap' : formatDuration(durationMax);
+      document.querySelectorAll('.duration-preset-btn').forEach(btn => {
+        btn.classList.toggle('active', Number(btn.dataset.duration) === durationMax);
+      });
+    }
+
+    function updateSortUI() {
+      document.querySelectorAll('.sort-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.sort === sortMode);
+      });
+    }
+
+    function updateSummary() {
+      const visibleEntries = getVisibleEntries();
+      countValue.textContent = visibleEntries.length;
+
+      if (!visibleEntries.length) {
+        cheapestValue.textContent = '—';
+        fastestValue.textContent = '—';
+        return;
+      }
+
+      const cheapest = [...visibleEntries].sort((a,b) => getCurrentPrice(a.dest) - getCurrentPrice(b.dest))[0].dest;
+      const fastest = [...visibleEntries].sort((a,b) => a.dest.durationMinutes - b.dest.durationMinutes)[0].dest;
+
+      cheapestValue.textContent = `${cheapest.name.split(' ')[0]} · €${getCurrentPrice(cheapest)}`;
+      fastestValue.textContent = `${fastest.name.split(' ')[0]} · ${fastest.durationLabel}`;
+    }
+
+    function reorderCards() {
+      const visibleEntries = sortEntries(getVisibleEntries());
+      visibleEntries.forEach(entry => list.appendChild(entry.card));
+    }
+
+    function updateLegend() {
+      const visibleDestinations = getVisibleEntries().map(entry => entry.dest);
+      const extents = getExtents(visibleDestinations.length ? visibleDestinations : destinations);
+
+      if (mode === 'price') {
+        legendTitle.textContent = `Colour and size currently show price for ${monthLabel(currentMonth)}`;
+        legendMin.textContent = `Cheaper · about €${Math.round(extents.min)}`;
+        legendMax.textContent = `Pricier · about €${Math.round(extents.max)}`;
+      } else {
+        legendTitle.textContent = 'Colour and size currently show duration';
+        const minHours = Math.floor(extents.min / 60);
+        const minMins = extents.min % 60;
+        const maxHours = Math.floor(extents.max / 60);
+        const maxMins = extents.max % 60;
+        legendMin.textContent = `Shorter · ${minHours}h ${String(minMins).padStart(2,'0')}m`;
+        legendMax.textContent = `Longer · ${maxHours}h ${String(maxMins).padStart(2,'0')}m`;
+      }
+
+      const directLabel = directOnly ? ' · direct only' : '';
+      const weekendLabel = activeFilter === 'weekend' ? ' · weekend mode' : '';
+      const budgetLabel = budgetMax < 700 ? ` · under €${budgetMax}` : '';
+      const durationLabel = durationMax < 800 ? ` · under ${formatDuration(durationMax).replace(' max','')}` : '';
+      const sortLabel = ` · sort: ${sortMode}`;
+      floatingMode.textContent = `${monthLabel(currentMonth)} · ${mode === 'price' ? 'price mode' : 'duration mode'} · ${pathMode === 'all' ? 'all paths on' : 'paths off unless selected'}${directLabel}${budgetLabel}${durationLabel}${weekendLabel}${sortLabel}`;
+    }
+
+    function updateMarkerStyles() {
+      const visibleDestinations = getVisibleEntries().map(entry => entry.dest);
+      const base = visibleDestinations.length ? visibleDestinations : destinations;
+
+      layers.forEach(entry => {
+        const style = getBubbleStyle(entry.dest, base);
+        entry.marker.setIcon(makeCircleIcon(style.size, style.color, entry.dest.weekendFriendly, entry.dest.direct));
+        entry.marker.setPopupContent(popupHtml(entry.dest));
+
+        const priceEl = entry.card.querySelector('.price-value');
+        const sortChip = entry.card.querySelector('.sort-chip');
+
+        if (priceEl) priceEl.textContent = currentPriceLabel(entry.dest);
+        if (sortChip) sortChip.textContent = getSortChipLabel(entry.dest);
+      });
+
+      updateLegend();
+      updateBudgetUI();
+      updateDurationUI();
+      updateSortUI();
+      reorderCards();
+    }
+
+    function updatePathVisibility() {
+      layers.forEach(entry => {
+        const visible = isEntryVisible(entry);
+        const shouldShow = visible && (pathMode === 'all' || activeMarkerName === entry.dest.name);
+        setRouteVisibility(entry, shouldShow);
+        if (!shouldShow) {
+          clearRouteAnimation(entry);
+        }
+      });
+    }
+
+    function updateVisibility() {
+      layers.forEach(entry => {
+        const visible = isEntryVisible(entry);
+
+        if (visible) {
+          entry.marker.addTo(map);
+          entry.card.classList.remove('hidden');
+        } else {
+          map.removeLayer(entry.marker);
+          entry.card.classList.add('hidden');
+          clearRouteAnimation(entry);
+        }
+      });
+
+      if (activeMarkerName) {
+        const stillVisible = layers.some(entry => entry.dest.name === activeMarkerName && isEntryVisible(entry));
+        if (!stillVisible) {
+          activeMarkerName = null;
+          clearAllRouteAnimations();
+        }
+      }
+
+      updatePathVisibility();
+      updateSummary();
+      updateMarkerStyles();
+    }
+
+    function setMode(nextMode) {
+      mode = nextMode;
+      document.getElementById('modePrice').classList.toggle('active', mode === 'price');
+      document.getElementById('modeDuration').classList.toggle('active', mode === 'duration');
+      updateMarkerStyles();
+    }
+
+    function setPathMode(nextMode) {
+      pathMode = nextMode;
+      document.getElementById('pathsOn').classList.toggle('active', pathMode === 'all');
+      document.getElementById('pathsOff').classList.toggle('active', pathMode === 'off');
+
+      if (pathMode === 'all') {
+        activeMarkerName = null;
+        clearAllRouteAnimations();
+      }
+
+      updatePathVisibility();
+      updateLegend();
+    }
+
+    function setFilter(nextFilter) {
+      activeFilter = nextFilter;
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === activeFilter);
+      });
+      updateVisibility();
+    }
+
+    function setMonth(nextMonth) {
+      currentMonth = nextMonth;
+      monthSelect.value = nextMonth;
+      document.querySelectorAll('.season-btn').forEach(btn => btn.classList.remove('active'));
+      updateVisibility();
+    }
+
+    function setDirectOnly(isOn) {
+      directOnly = isOn;
+      document.getElementById('directOn').classList.toggle('active', directOnly);
+      document.getElementById('directOff').classList.toggle('active', !directOnly);
+      updateVisibility();
+    }
+
+    function setBudget(nextBudget) {
+      budgetMax = Number(nextBudget);
+      budgetSlider.value = budgetMax;
+      updateVisibility();
+    }
+
+    function setDuration(nextDuration) {
+      durationMax = Number(nextDuration);
+      durationSlider.value = durationMax;
+      updateVisibility();
+    }
+
+    function setSort(nextSort) {
+      sortMode = nextSort;
+      updateVisibility();
+    }
+
+    document.getElementById('modePrice').addEventListener('click', () => setMode('price'));
+    document.getElementById('modeDuration').addEventListener('click', () => setMode('duration'));
+    document.getElementById('pathsOn').addEventListener('click', () => setPathMode('all'));
+    document.getElementById('pathsOff').addEventListener('click', () => setPathMode('off'));
+    document.getElementById('directOn').addEventListener('click', () => setDirectOnly(true));
+    document.getElementById('directOff').addEventListener('click', () => setDirectOnly(false));
+    document.getElementById('resetMonth').addEventListener('click', () => setMonth('apr'));
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => setFilter(btn.dataset.filter));
+    });
+
+    document.querySelectorAll('.season-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.season-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        setMonth(seasonToMonth[btn.dataset.season]);
+      });
+    });
+
+    document.querySelectorAll('.budget-preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => setBudget(btn.dataset.budget));
+    });
+
+    document.querySelectorAll('.duration-preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => setDuration(btn.dataset.duration));
+    });
+
+    document.querySelectorAll('.sort-btn').forEach(btn => {
+      btn.addEventListener('click', () => setSort(btn.dataset.sort));
+    });
+
+    monthSelect.addEventListener('change', e => setMonth(e.target.value));
+    searchInput.addEventListener('input', updateVisibility);
+    budgetSlider.addEventListener('input', e => setBudget(e.target.value));
+    durationSlider.addEventListener('input', e => setDuration(e.target.value));
+
+    updateVisibility();
+    map.fitBounds(bounds, { padding:[40,40] });
+  </script>
+</body>
+</html>
