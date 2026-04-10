@@ -219,22 +219,109 @@
  @keyframes pulseGlow{0%{opacity:.45}50%{opacity:.95}100%{opacity:.45}}
  .marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:rgba(37,99,235,.18)!important;border-radius:999px}
  .marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{background:linear-gradient(135deg,#2563eb,#7c3aed)!important;color:white!important;border-radius:999px!important;font-weight:800!important;border:3px solid rgba(255,255,255,.9);box-shadow:0 10px 24px rgba(79,70,229,.24)}
- @media (max-width:1150px){.app{grid-template-columns:1fr;grid-template-rows:2060px 1fr}.info-card{width:300px}}
+
+
+ /* --- v30 layout + tracker + results refresh --- */
+ .app{display:grid;grid-template-columns:360px minmax(0,1fr);min-height:100vh;height:auto;gap:14px;padding:14px}
+ .sidebar{padding:18px;overflow-y:auto;max-height:calc(100vh - 28px)}
+ .map-shell{position:relative;overflow:hidden;display:grid;grid-template-rows:minmax(0,1fr) 340px;min-height:calc(100vh - 28px)}
+ .map-stage{position:relative;overflow:hidden;min-height:0}
+ #map{width:100%;height:100%;border-radius:26px}
+ .results-dock{display:flex;flex-direction:column;min-height:0;border-top:1px solid var(--line);background:linear-gradient(180deg,var(--surface-4) 0%,var(--surface-3) 100%)}
+ .results-toolbar{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 16px 10px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.22)}
+ .results-toolbar-left{display:flex;flex-direction:column;gap:4px}
+ .results-toolbar-title{font-size:16px;font-weight:900;color:var(--text);letter-spacing:-.02em}
+ .results-toolbar-sub{font-size:12px;color:var(--soft);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+ .results-filter-row{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 12px}
+ .results-filter-btn{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:9px 12px;font-size:12px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;cursor:pointer}
+ .results-filter-btn.active{color:#fff;background:linear-gradient(135deg,#2563eb,#7c3aed);border-color:transparent;box-shadow:0 10px 24px rgba(79,70,229,.22)}
+ .list{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:0;padding:14px;overflow:auto;align-content:start}
+ .card{display:flex;flex-direction:column;gap:12px;min-height:100%;padding:16px;border-radius:20px}
+ .card-top{padding-top:0!important;margin-bottom:0!important;display:block}
+ .card-top-main{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+ .card-heading-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+ .card h3{font-size:18px;line-height:1.2}
+ .score-badge,.preset-badge,.favorite-btn,.tracker-buttons,.tracker-btn{position:static!important;z-index:auto!important}
+ .score-badge{top:auto!important;left:auto!important;display:inline-flex!important;align-items:center;justify-content:center;padding:6px 10px;border-radius:999px;color:#fff;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:linear-gradient(135deg,#8b5cf6,#6d28d9)}
+ .preset-badge{top:auto!important;left:auto!important;display:none;padding:6px 10px;border-radius:999px;color:#fff;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:linear-gradient(135deg,#ec4899,#7c3aed)}
+ .compare-badge,.surprise-badge,.visited-badge,.want-badge{display:none!important}
+ .favorite-btn{width:auto!important;height:38px!important;padding:0 14px;background:var(--surface-3);color:#94a3b8;font-size:13px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+ .favorite-btn.active{background:linear-gradient(135deg,#fb7185,#e11d48);color:#fff}
+ .card-state-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding-top:2px}
+ .tracker-buttons{display:flex!important;gap:8px;flex-wrap:wrap;right:auto!important;top:auto!important}
+ .tracker-btn{width:auto!important;height:38px!important;padding:0 14px;border-radius:999px;font-size:13px;font-weight:800;gap:8px}
+ .tracker-btn.active.visited{background:linear-gradient(135deg,#10b981,#047857);color:#fff}
+ .tracker-btn.active.want{background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff}
+ .badge-wrap{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;justify-content:flex-end;max-width:52%}
+ .meta{font-size:13px;color:var(--muted);line-height:1.6}
+ .card.selected-card{border-color:#a78bfa;box-shadow:0 0 0 3px rgba(139,92,246,.10),0 12px 28px rgba(139,92,246,.14)}
+ .popup-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+ .popup-action{border:none;padding:9px 11px;border-radius:999px;font-size:12px;font-weight:800;cursor:pointer;background:#eef2ff;color:#334155}
+ .popup-action.want.active{background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff}
+ .popup-action.visited.active{background:linear-gradient(135deg,#10b981,#047857);color:#fff}
+ .popup-action.favorite.active{background:linear-gradient(135deg,#fb7185,#e11d48);color:#fff}
+ .popup-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+ .popup-tag{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.03em;background:linear-gradient(135deg,#f5f3ff,#ddd6fe);color:#5b21b6;border:1px solid rgba(124,58,237,.16)}
+ .info-card{max-height:calc(100% - 126px);overflow:auto}
+ 
+
+
+ /* --- v31 layout cleanup --- */
+ .app{align-items:start;height:auto;min-height:100vh}
+ .sidebar{position:sticky;top:14px;align-self:start;max-height:calc(100vh - 28px)}
+ .sidebar-topbar{display:flex;justify-content:flex-end;margin-bottom:10px}
+ .sidebar-toggle-btn,.sidebar-reopen{border:none;border-radius:999px;padding:10px 14px;font-size:13px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,#1d4ed8,#7c3aed);color:#fff;box-shadow:0 10px 22px rgba(79,70,229,.18)}
+ .sidebar-reopen{position:absolute;left:18px;top:18px;z-index:650;display:none}
+ .app.sidebar-collapsed{grid-template-columns:0 minmax(0,1fr)}
+ .app.sidebar-collapsed .sidebar{opacity:0;transform:translateX(-18px);pointer-events:none;width:0;max-width:0;min-width:0;padding:0;border:none;overflow:hidden}
+ .app.sidebar-collapsed .sidebar *{visibility:hidden}
+ .app.sidebar-collapsed .sidebar-reopen{display:inline-flex}
+ .map-shell{display:flex;flex-direction:column;overflow:visible;min-height:auto;background:transparent!important;border:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;gap:14px;padding:14px!important}
+ .map-stage{height:72vh;min-height:560px;position:relative;background:var(--panel);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--panel-border);border-radius:26px;box-shadow:var(--shadow);overflow:hidden}
+ .results-dock{border-top:none;background:var(--panel);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--panel-border);border-radius:26px;box-shadow:var(--shadow);padding:14px 16px 18px}
+ .results-toolbar{padding:8px 0 10px;background:transparent;border-bottom:none}
+ .results-filter-row{padding:0 0 12px}
+ .list{display:grid;grid-template-columns:repeat(2,minmax(320px,1fr));gap:14px;padding:0;overflow:visible;align-items:start}
+ .card{width:100%;max-width:none}
+ .app.sidebar-collapsed .list{grid-template-columns:repeat(3,minmax(280px,1fr))}
+ .trip-icon{font-size:15px}
+ .tracker-btn,.favorite-btn,.popup-action{display:inline-flex;align-items:center;justify-content:center;gap:8px}
+ .favorite-btn.active{background:linear-gradient(135deg,#fb7185,#e11d48);color:#fff}
+ .popup-action{min-height:38px}
+ 
+ .card-top-main{flex-direction:column;align-items:flex-start}
+ .badge-wrap{max-width:100%;justify-content:flex-start}
+ .badge-wrap .badge:nth-child(n+6){display:none}
+ .meta .currency-chip,.meta .cost-chip,.meta .timezone-chip,.meta .transfer-chip,.meta .tag-chip{display:none}
+ .meta .month-chip,.meta .season-chip,.meta .score-chip,.meta .sort-chip{margin-right:6px}
+ .card-state-row{justify-content:flex-start}
+ 
+ @media (max-width:1150px){.app{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}.sidebar{position:relative;top:0;max-height:none}.map-shell{min-height:auto}.info-card{width:300px}}
  @media (max-width:720px){
- .app{padding:10px;gap:10px}.sidebar{padding:14px}h1{font-size:25px}
+ .app{padding:10px;gap:10px}.sidebar{padding:14px}h1{font-size:25px}.map-shell{padding:10px!important}
  .summary-grid,.filter-buttons,.segmented,.season-buttons,.budget-presets,.duration-presets,.sort-buttons,.preset-buttons{grid-template-columns:1fr}
  .month-row{grid-template-columns:1fr}
  .floating-title{left:12px;right:12px;min-width:unset}
  .surprise-toast{left:12px;right:12px;width:auto}
- .info-card{left:12px;right:12px;width:auto;top:auto;bottom:220px}
+ .info-card{left:12px;right:12px;width:auto;top:auto;bottom:240px}
  .compare-card{left:12px;right:12px;width:auto;bottom:12px}
  .compare-grid{grid-template-columns:1fr}
+ .map-stage{height:56vh;min-height:360px}
+ .list{grid-template-columns:1fr;padding:12px}
+ .results-toolbar{flex-direction:column;align-items:flex-start}
+ .results-filter-row{padding:0 12px 12px}
+ .card-top-main{flex-direction:column}
+ .badge-wrap{max-width:100%;justify-content:flex-start}
+ .card-state-row{flex-direction:column;align-items:stretch}
+ .tracker-buttons{width:100%}
+ .tracker-btn,.favorite-btn{width:100%!important;justify-content:center}
  }
  </style>
 </head>
 <body>
  <div class="app">
  <aside class="sidebar panel">
+ <div class="sidebar-topbar"><button id="sidebarToggle" class="sidebar-toggle-btn" type="button">Hide filters</button></div>
  <div class="eyebrow"><span class="mini-dot"></span> Interactive trip explorer</div>
  <h1>Dublin flight map</h1>
  <p class="sub">Version 29 adds the final feature: <strong>country outlines / shaded regions</strong>.</p>
@@ -401,10 +488,11 @@
  </div>
  </div>
 
- <div class="list" id="destinationList"></div>
  </aside>
 
  <main class="map-shell panel" id="mapShell">
+ <div class="map-stage">
+ <button id="sidebarReopen" class="sidebar-reopen" type="button">Filters</button>
  <div class="floating-title">
  <div class="small">Map mode</div>
  <div class="big" id="floatingMode">April · price mode · all paths on</div>
@@ -454,6 +542,22 @@
 
  <div id="hoverTooltip" class="hover-tooltip hidden"></div>
  <div id="map"></div>
+ </div>
+ <section class="results-dock">
+ <div class="results-toolbar">
+ <div class="results-toolbar-left">
+ <div class="results-toolbar-title">Results</div>
+ <div class="results-toolbar-sub" id="resultsSummary">Showing all visible trips</div>
+ </div>
+ </div>
+ <div class="results-filter-row">
+ <button class="results-filter-btn active" data-results-filter="all">All</button>
+ <button class="results-filter-btn" data-results-filter="favorites">Saved</button>
+ <button class="results-filter-btn" data-results-filter="visited">Been</button>
+ <button class="results-filter-btn" data-results-filter="want">Want to go</button>
+ </div>
+ <div class="list" id="destinationList"></div>
+ </section>
  </main>
  </div>
 
@@ -463,7 +567,7 @@
  <script>
  let currentMonth='apr', mode='price', pathMode='all', activeFilter='all', directOnly=false, budgetMax=700, durationMax=800, sortMode='cheapest',
  activeMarkerName=null, heatEnabled=false, selectedDestination=null, darkMode=false, compareMode=false, comparedDestinations=[],
- surpriseDestinationName=null, surpriseTimer=null, activePreset='none', outlinesEnabled=true;
+ surpriseDestinationName=null, surpriseTimer=null, activePreset='none', outlinesEnabled=true, resultsTrackerFilter='all';
 
  let favoriteNames=JSON.parse(localStorage.getItem('dublinFlightFavorites')||'[]');
  let visitedNames=JSON.parse(localStorage.getItem('dublinFlightVisited')||'[]');
@@ -475,7 +579,10 @@
  const heatLayer=L.heatLayer([],{radius:35,blur:28,maxZoom:6,gradient:{0.2:'#60a5fa',0.45:'#14b8a6',0.7:'#22c55e',1.0:'#f59e0b'}});
  let geoJsonLayer=null;
 
- const infoCard=document.getElementById('infoCard'),
+ const app=document.querySelector('.app'),
+ sidebarToggle=document.getElementById('sidebarToggle'),
+ sidebarReopen=document.getElementById('sidebarReopen'),
+ infoCard=document.getElementById('infoCard'),
  infoTitle=document.getElementById('infoTitle'),
  infoSub=document.getElementById('infoSub'),
  infoPrice=document.getElementById('infoPrice'),
@@ -512,6 +619,7 @@
  cheapestValue=document.getElementById('cheapestValue'),
  fastestValue=document.getElementById('fastestValue'),
  floatingMode=document.getElementById('floatingMode'),
+ resultsSummary=document.getElementById('resultsSummary'),
  searchInput=document.getElementById('searchInput'),
  monthSelect=document.getElementById('monthSelect'),
  budgetSlider=document.getElementById('budgetSlider'),
@@ -619,6 +727,44 @@
  function isWantToGo(name){ return wantToGoNames.includes(name); }
  function updateCounts(){ favoritesCount.textContent=`${favoriteNames.length} saved`; visitedCount.textContent=`${visitedNames.length} visited`; wantCount.textContent=`${wantToGoNames.length} want to go`; }
 
+ function toggleFavorite(name){
+ const idx=favoriteNames.indexOf(name);
+ if(idx>=0) favoriteNames.splice(idx,1); else favoriteNames.push(name);
+ saveLists();
+ updateCounts();
+ updateFavoriteVisuals();
+ updateTrackerVisuals();
+ updateMarkerStyles();
+ }
+
+ function toggleVisited(name){
+ const idx=visitedNames.indexOf(name);
+ if(idx>=0) visitedNames.splice(idx,1);
+ else { visitedNames.push(name); wantToGoNames=wantToGoNames.filter(item=>item!==name); }
+ saveLists();
+ updateCounts();
+ updateTrackerVisuals();
+ updateMarkerStyles();
+ }
+
+ function toggleWantToGo(name){
+ const idx=wantToGoNames.indexOf(name);
+ if(idx>=0) wantToGoNames.splice(idx,1);
+ else { wantToGoNames.push(name); visitedNames=visitedNames.filter(item=>item!==name); }
+ saveLists();
+ updateCounts();
+ updateTrackerVisuals();
+ updateMarkerStyles();
+ }
+
+ function escapeJsString(value){
+ return String(value).replace(/\\/g,'\\\\').replace(/'/g,"\'");
+ }
+
+ window.toggleFavorite=toggleFavorite;
+ window.toggleVisited=toggleVisited;
+ window.toggleWantToGo=toggleWantToGo;
+
  const destinations=[
  { name:'London', coords:[51.5072,-0.1276], basePrice:85, durationLabel:'1h 24m', durationMinutes:84, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:7, weatherTag:'Mild city weather', bestSeason:'Spring / Autumn', currency:'GBP (£)', costLevel:'Medium', timezoneDiff:'Same as Dublin', airportTransfer:'Fast rail / tube links, city in ~30–45 mins', tags:['Nightlife','Food','Culture'], note:'Direct', monthFactors:{apr:1.0,may:1.0,jun:1.1,jul:1.25,aug:1.28,sep:1.08,oct:1.02,nov:0.95,dec:1.18,jan:0.9,feb:0.92,mar:0.98}, cheapestMonths:['jan','feb','apr'] },
  { name:'Paris', coords:[48.8566,2.3522], basePrice:103, durationLabel:'1h 50m', durationMinutes:110, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:10, weatherTag:'Mild / romantic weather', bestSeason:'Spring', currency:'EUR (€)', costLevel:'Expensive', timezoneDiff:'+1 hour', airportTransfer:'Train / RER into centre, usually ~35–50 mins', tags:['Romantic','Food','Culture'], note:'Direct / route-based', monthFactors:{apr:1.0,may:1.04,jun:1.1,jul:1.22,aug:1.26,sep:1.08,oct:1.0,nov:0.95,dec:1.16,jan:0.92,feb:0.94,mar:0.98}, cheapestMonths:['jan','feb','apr'] },
@@ -642,6 +788,32 @@
  { name:'Hong Kong', coords:[22.3193,114.1694], basePrice:474, durationLabel:'usually 1+ stop', durationMinutes:780, europe:false, asia:true, direct:false, weekendFriendly:false, prettyScore:8, weatherTag:'Humid subtropical weather', bestSeason:'Autumn / Winter', currency:'HKD ($)', costLevel:'Expensive', timezoneDiff:'+8 hours', airportTransfer:'Airport express is strong, city in ~25–35 mins', tags:['Food','Nightlife','Culture'], note:'No direct flight result found', monthFactors:{apr:1.0,may:1.02,jun:1.08,jul:1.14,aug:1.16,sep:1.08,oct:1.0,nov:0.96,dec:1.22,jan:1.16,feb:1.08,mar:1.0}, cheapestMonths:['may','nov'] },
  { name:'Shanghai', coords:[31.2304,121.4737], basePrice:544, durationLabel:'usually 1+ stop', durationMinutes:730, europe:false, asia:true, direct:false, weekendFriendly:false, prettyScore:7, weatherTag:'Big-city seasonal weather', bestSeason:'Spring / Autumn', currency:'CNY (¥)', costLevel:'Medium', timezoneDiff:'+8 hours', airportTransfer:'Maglev / metro / taxi, centre often ~35–60 mins', tags:['Food','Nightlife','Culture'], note:'No direct flight result found', monthFactors:{apr:1.0,may:1.03,jun:1.08,jul:1.14,aug:1.16,sep:1.08,oct:1.0,nov:0.94,dec:1.22,jan:1.16,feb:1.08,mar:1.0}, cheapestMonths:['nov','apr'] },
  { name:'Chongqing', coords:[29.4316,106.9123], basePrice:607, durationLabel:'usually 1+ stop', durationMinutes:760, europe:false, asia:true, direct:false, weekendFriendly:false, prettyScore:6, weatherTag:'Humid / dramatic weather', bestSeason:'Autumn', currency:'CNY (¥)', costLevel:'Cheap', timezoneDiff:'+8 hours', airportTransfer:'Metro / taxi possible, centre usually ~30–50 mins', tags:['Food','Culture','Adventure'], note:'Assuming your list meant Chongqing', monthFactors:{apr:1.0,may:1.03,jun:1.08,jul:1.13,aug:1.15,sep:1.07,oct:1.0,nov:0.95,dec:1.22,jan:1.15,feb:1.08,mar:1.0}, cheapestMonths:['nov','apr'] }
+,
+ { name:'Zurich', coords:[47.3769,8.5417], basePrice:72, durationLabel:'2h 20m', durationMinutes:140, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:9, weatherTag:'Clean alpine city weather', bestSeason:'Spring / Winter', currency:'CHF', costLevel:'Expensive', timezoneDiff:'+1 hour', airportTransfer:'Fast rail into the centre, usually ~10–20 mins', tags:['Scenic','Luxury','Food'], note:'Zurich, Switzerland', monthFactors:{apr:1.0,may:1.04,jun:1.1,jul:1.18,aug:1.2,sep:1.08,oct:1.02,nov:0.97,dec:1.18,jan:1.02,feb:1.0,mar:0.99}, cheapestMonths:['apr','nov'] },
+ { name:'Geneva', coords:[46.2044,6.1432], basePrice:74, durationLabel:'2h 15m', durationMinutes:135, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:8, weatherTag:'Fresh lake and alpine weather', bestSeason:'Spring / Summer', currency:'CHF', costLevel:'Expensive', timezoneDiff:'+1 hour', airportTransfer:'Excellent rail, centre often ~10–15 mins', tags:['Scenic','Luxury','Culture'], note:'Swiss lakeside city break', monthFactors:{apr:1.0,may:1.04,jun:1.09,jul:1.16,aug:1.18,sep:1.08,oct:1.02,nov:0.97,dec:1.15,jan:1.01,feb:0.99,mar:0.99}, cheapestMonths:['apr','nov'] },
+ { name:'Belfast', coords:[54.5973,-5.9301], basePrice:36, durationLabel:'55m', durationMinutes:55, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:7, weatherTag:'Cool easy city weather', bestSeason:'Spring / Summer', currency:'GBP (£)', costLevel:'Cheap', timezoneDiff:'Same as Dublin', airportTransfer:'Very short hop with quick city access', tags:['Culture','Food','Nightlife'], note:'Very easy weekend hop from Dublin', monthFactors:{apr:1.0,may:1.02,jun:1.05,jul:1.08,aug:1.1,sep:1.04,oct:1.0,nov:0.96,dec:1.08,jan:0.95,feb:0.96,mar:0.98}, cheapestMonths:['jan','feb','apr'] },
+ { name:'Edinburgh', coords:[55.9533,-3.1883], basePrice:44, durationLabel:'1h 10m', durationMinutes:70, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:9, weatherTag:'Historic cool-weather city break', bestSeason:'Spring / Autumn', currency:'GBP (£)', costLevel:'Medium', timezoneDiff:'Same as Dublin', airportTransfer:'Tram / bus into centre, usually ~25–35 mins', tags:['Culture','Food','Scenic'], note:'Strong city-break option with great atmosphere', monthFactors:{apr:1.0,may:1.02,jun:1.06,jul:1.1,aug:1.12,sep:1.05,oct:1.01,nov:0.96,dec:1.1,jan:0.94,feb:0.95,mar:0.98}, cheapestMonths:['jan','feb','apr'] },
+ { name:'Barcelona', coords:[41.3874,2.1686], basePrice:68, durationLabel:'2h 35m', durationMinutes:155, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:9, weatherTag:'Warm coastal city weather', bestSeason:'Spring / Autumn', currency:'EUR (€)', costLevel:'Medium', timezoneDiff:'+1 hour', airportTransfer:'Metro / train, centre often ~25–35 mins', tags:['Beach','Food','Nightlife'], note:'Great all-round city + beach break', monthFactors:{apr:1.0,may:1.05,jun:1.12,jul:1.24,aug:1.28,sep:1.14,oct:1.04,nov:0.97,dec:1.12,jan:0.93,feb:0.94,mar:0.98}, cheapestMonths:['jan','feb','apr'] },
+ { name:'Madrid', coords:[40.4168,-3.7038], basePrice:61, durationLabel:'2h 30m', durationMinutes:150, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:8, weatherTag:'Dry sunny city weather', bestSeason:'Spring / Autumn', currency:'EUR (€)', costLevel:'Medium', timezoneDiff:'+1 hour', airportTransfer:'Metro / rail links, usually ~20–35 mins', tags:['Food','Nightlife','Culture'], note:'Strong value city break with lots to do', monthFactors:{apr:1.0,may:1.05,jun:1.11,jul:1.22,aug:1.24,sep:1.12,oct:1.03,nov:0.97,dec:1.12,jan:0.93,feb:0.94,mar:0.98}, cheapestMonths:['jan','feb','apr'] },
+ { name:'Seville', coords:[37.3891,-5.9845], basePrice:72, durationLabel:'2h 50m', durationMinutes:170, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:9, weatherTag:'Hot sunny southern weather', bestSeason:'Spring / Winter', currency:'EUR (€)', costLevel:'Medium', timezoneDiff:'+1 hour', airportTransfer:'Bus / taxi into centre, usually ~20–30 mins', tags:['Romantic','Food','Culture'], note:'Great warmer-weather romantic city break', monthFactors:{apr:1.0,may:1.06,jun:1.14,jul:1.24,aug:1.28,sep:1.14,oct:1.05,nov:0.98,dec:1.08,jan:0.94,feb:0.95,mar:0.99}, cheapestMonths:['jan','feb','dec'] },
+ { name:'Valencia', coords:[39.4699,-0.3763], basePrice:58, durationLabel:'2h 40m', durationMinutes:160, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:8, weatherTag:'Sunny beach-city weather', bestSeason:'Spring / Autumn', currency:'EUR (€)', costLevel:'Medium', timezoneDiff:'+1 hour', airportTransfer:'Metro into the city, usually ~20–30 mins', tags:['Beach','Food','Culture'], note:'Good mix of city, food and coast', monthFactors:{apr:1.0,may:1.05,jun:1.12,jul:1.22,aug:1.26,sep:1.13,oct:1.04,nov:0.97,dec:1.1,jan:0.93,feb:0.94,mar:0.98}, cheapestMonths:['jan','feb','apr'] },
+ { name:'Copenhagen', coords:[55.6761,12.5683], basePrice:57, durationLabel:'2h 10m', durationMinutes:130, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:9, weatherTag:'Cool stylish Nordic weather', bestSeason:'Spring / Summer', currency:'DKK', costLevel:'Expensive', timezoneDiff:'+1 hour', airportTransfer:'Metro / rail into centre, often ~15 mins', tags:['Food','Design','Culture'], note:'Design-heavy Nordic city break', monthFactors:{apr:1.0,may:1.03,jun:1.08,jul:1.15,aug:1.17,sep:1.06,oct:1.0,nov:0.96,dec:1.12,jan:0.94,feb:0.95,mar:0.98}, cheapestMonths:['jan','feb','apr'] },
+ { name:'Oslo', coords:[59.9139,10.7522], basePrice:63, durationLabel:'2h 05m', durationMinutes:125, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:8, weatherTag:'Fresh Nordic city weather', bestSeason:'Summer / Winter', currency:'NOK', costLevel:'Expensive', timezoneDiff:'+1 hour', airportTransfer:'Fast rail / airport train, centre around ~20 mins', tags:['Scenic','Food','Culture'], note:'Good for a cleaner, calmer Nordic trip', monthFactors:{apr:1.0,may:1.03,jun:1.08,jul:1.14,aug:1.16,sep:1.05,oct:1.0,nov:0.97,dec:1.15,jan:1.0,feb:0.98,mar:0.99}, cheapestMonths:['apr','nov'] },
+ { name:'Prague', coords:[50.0755,14.4378], basePrice:46, durationLabel:'2h 20m', durationMinutes:140, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:9, weatherTag:'Classic city-break weather', bestSeason:'Spring / Autumn', currency:'CZK', costLevel:'Cheap', timezoneDiff:'+1 hour', airportTransfer:'Bus / taxi into centre, usually ~30–40 mins', tags:['Culture','Nightlife','Romantic'], note:'Very strong value city break', monthFactors:{apr:1.0,may:1.04,jun:1.1,jul:1.18,aug:1.2,sep:1.08,oct:1.02,nov:0.96,dec:1.15,jan:0.93,feb:0.94,mar:0.98}, cheapestMonths:['jan','feb','apr'] },
+ { name:'Kraków', coords:[50.0647,19.945], basePrice:39, durationLabel:'2h 45m', durationMinutes:165, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:8, weatherTag:'Cool historic city weather', bestSeason:'Spring / Autumn', currency:'PLN (zł)', costLevel:'Cheap', timezoneDiff:'+1 hour', airportTransfer:'Train / bus into centre, often ~25–35 mins', tags:['Culture','Nightlife','Food'], note:'Very good value with strong nightlife', monthFactors:{apr:1.0,may:1.04,jun:1.09,jul:1.16,aug:1.18,sep:1.07,oct:1.01,nov:0.96,dec:1.14,jan:0.93,feb:0.94,mar:0.98}, cheapestMonths:['jan','feb','apr'] },
+ { name:'Dubrovnik', coords:[42.6507,18.0944], basePrice:76, durationLabel:'3h 05m', durationMinutes:185, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:9, weatherTag:'Sunny coastal old-town weather', bestSeason:'Spring / Autumn', currency:'EUR (€)', costLevel:'Expensive', timezoneDiff:'+1 hour', airportTransfer:'Bus / taxi to old town, usually ~30 mins', tags:['Beach','Romantic','Scenic'], note:'Great scenic coastal break', monthFactors:{apr:1.0,may:1.08,jun:1.14,jul:1.26,aug:1.3,sep:1.14,oct:1.05,nov:0.98,dec:1.1,jan:0.94,feb:0.95,mar:0.99}, cheapestMonths:['jan','feb','apr'] },
+ { name:'Split', coords:[43.5081,16.4402], basePrice:69, durationLabel:'3h 00m', durationMinutes:180, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:8, weatherTag:'Sunny Adriatic weather', bestSeason:'Spring / Summer', currency:'EUR (€)', costLevel:'Medium', timezoneDiff:'+1 hour', airportTransfer:'Bus / taxi into centre, usually ~30 mins', tags:['Beach','Food','Nightlife'], note:'Good beach and old-town mix', monthFactors:{apr:1.0,may:1.07,jun:1.13,jul:1.25,aug:1.28,sep:1.13,oct:1.04,nov:0.97,dec:1.08,jan:0.94,feb:0.95,mar:0.99}, cheapestMonths:['jan','feb','apr'] },
+ { name:'Nice', coords:[43.7102,7.262], basePrice:73, durationLabel:'2h 35m', durationMinutes:155, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:9, weatherTag:'Sunny Riviera weather', bestSeason:'Spring / Summer', currency:'EUR (€)', costLevel:'Expensive', timezoneDiff:'+1 hour', airportTransfer:'Tram into city, usually ~20–30 mins', tags:['Beach','Luxury','Romantic'], note:'Strong luxury-feel coastal city break', monthFactors:{apr:1.0,may:1.08,jun:1.14,jul:1.25,aug:1.29,sep:1.13,oct:1.04,nov:0.98,dec:1.1,jan:0.94,feb:0.95,mar:0.99}, cheapestMonths:['jan','feb','apr'] },
+ { name:'Bordeaux', coords:[44.8378,-0.5792], basePrice:63, durationLabel:'2h 00m', durationMinutes:120, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:8, weatherTag:'Mild southwest France weather', bestSeason:'Spring / Autumn', currency:'EUR (€)', costLevel:'Medium', timezoneDiff:'+1 hour', airportTransfer:'Tram / shuttle into centre, usually ~25–35 mins', tags:['Food','Romantic','Culture'], note:'Great wine-and-food city break', monthFactors:{apr:1.0,may:1.04,jun:1.1,jul:1.18,aug:1.21,sep:1.09,oct:1.02,nov:0.97,dec:1.1,jan:0.93,feb:0.94,mar:0.98}, cheapestMonths:['jan','feb','apr'] },
+ { name:'La Rochelle', coords:[46.1603,-1.1511], basePrice:67, durationLabel:'2h 05m', durationMinutes:125, europe:true, asia:false, direct:false, weekendFriendly:true, prettyScore:8, weatherTag:'Fresh Atlantic coastal weather', bestSeason:'Spring / Summer', currency:'EUR (€)', costLevel:'Medium', timezoneDiff:'+1 hour', airportTransfer:'Usually best with a connection or onward rail', tags:['Beach','Food','Quiet'], note:'Atlantic coast option with marina / old port feel', monthFactors:{apr:1.0,may:1.04,jun:1.1,jul:1.18,aug:1.2,sep:1.09,oct:1.02,nov:0.97,dec:1.08,jan:0.93,feb:0.94,mar:0.98}, cheapestMonths:['jan','feb','apr'] },
+ { name:'Brussels', coords:[50.8503,4.3517], basePrice:48, durationLabel:'1h 45m', durationMinutes:105, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:7, weatherTag:'Easy European city weather', bestSeason:'Spring / Autumn', currency:'EUR (€)', costLevel:'Medium', timezoneDiff:'+1 hour', airportTransfer:'Fast rail into centre, often ~20 mins', tags:['Food','Culture','Nightlife'], note:'Easy quick city break', monthFactors:{apr:1.0,may:1.03,jun:1.08,jul:1.16,aug:1.18,sep:1.07,oct:1.01,nov:0.96,dec:1.12,jan:0.92,feb:0.93,mar:0.98}, cheapestMonths:['jan','feb','apr'] },
+ { name:'Cologne', coords:[50.9375,6.9603], basePrice:45, durationLabel:'1h 55m', durationMinutes:115, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:7, weatherTag:'Cool Rhine city weather', bestSeason:'Spring / Winter markets', currency:'EUR (€)', costLevel:'Medium', timezoneDiff:'+1 hour', airportTransfer:'Rail into the city, usually ~15–25 mins', tags:['Culture','Food','Nightlife'], note:'Solid quick weekend trip', monthFactors:{apr:1.0,may:1.03,jun:1.08,jul:1.16,aug:1.18,sep:1.07,oct:1.01,nov:0.96,dec:1.14,jan:0.92,feb:0.93,mar:0.98}, cheapestMonths:['jan','feb','apr'] },
+ { name:'Marrakech', coords:[31.6295,-7.9811], basePrice:84, durationLabel:'4h 00m', durationMinutes:240, europe:false, asia:false, direct:true, weekendFriendly:true, prettyScore:9, weatherTag:'Warm dry weather', bestSeason:'Spring / Winter', currency:'MAD', costLevel:'Medium', timezoneDiff:'Same as Dublin', airportTransfer:'Taxi into medina / city, usually ~20–30 mins', tags:['Food','Culture','Romantic'], note:'Morocco option with colour and warmth', monthFactors:{apr:1.0,may:1.04,jun:1.08,jul:1.16,aug:1.18,sep:1.08,oct:1.03,nov:0.98,dec:1.08,jan:0.96,feb:0.97,mar:0.99}, cheapestMonths:['jan','feb','nov'] },
+ { name:'Casablanca', coords:[33.5731,-7.5898], basePrice:79, durationLabel:'3h 45m', durationMinutes:225, europe:false, asia:false, direct:true, weekendFriendly:true, prettyScore:7, weatherTag:'Mild Atlantic weather', bestSeason:'Spring / Autumn', currency:'MAD', costLevel:'Medium', timezoneDiff:'Same as Dublin', airportTransfer:'Train / taxi into the city, usually ~35–45 mins', tags:['Food','Culture','Beach'], note:'Good Morocco city option with coast access', monthFactors:{apr:1.0,may:1.04,jun:1.09,jul:1.16,aug:1.18,sep:1.09,oct:1.03,nov:0.98,dec:1.08,jan:0.96,feb:0.97,mar:0.99}, cheapestMonths:['jan','feb','nov'] },
+ { name:'Agadir', coords:[30.4278,-9.5981], basePrice:86, durationLabel:'4h 05m', durationMinutes:245, europe:false, asia:false, direct:true, weekendFriendly:true, prettyScore:8, weatherTag:'Sunny beach weather', bestSeason:'Spring / Winter', currency:'MAD', costLevel:'Medium', timezoneDiff:'Same as Dublin', airportTransfer:'Taxi into resort area, usually ~25–35 mins', tags:['Beach','Food','Relaxed'], note:'Warm Morocco beach option', monthFactors:{apr:1.0,may:1.04,jun:1.08,jul:1.15,aug:1.17,sep:1.08,oct:1.03,nov:0.98,dec:1.08,jan:0.96,feb:0.97,mar:0.99}, cheapestMonths:['jan','feb','nov'] },
+ { name:'Fez', coords:[34.0181,-5.0078], basePrice:82, durationLabel:'3h 50m', durationMinutes:230, europe:false, asia:false, direct:false, weekendFriendly:true, prettyScore:8, weatherTag:'Warm historic city weather', bestSeason:'Spring / Autumn', currency:'MAD', costLevel:'Cheap', timezoneDiff:'Same as Dublin', airportTransfer:'Taxi transfer into the old city area', tags:['Culture','Food','Adventure'], note:'Historic Morocco option with medina feel', monthFactors:{apr:1.0,may:1.04,jun:1.08,jul:1.15,aug:1.17,sep:1.08,oct:1.03,nov:0.98,dec:1.08,jan:0.96,feb:0.97,mar:0.99}, cheapestMonths:['jan','feb','nov'] },
+ { name:'Reykjavík', coords:[64.1466,-21.9426], basePrice:108, durationLabel:'2h 45m', durationMinutes:165, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:9, weatherTag:'Cold dramatic weather', bestSeason:'Winter / Summer', currency:'ISK', costLevel:'Expensive', timezoneDiff:'Same as Dublin', airportTransfer:'Airport coach into town, usually ~45–55 mins', tags:['Scenic','Adventure','Nature'], note:'Amazing for dramatic scenery', monthFactors:{apr:1.0,may:1.03,jun:1.08,jul:1.16,aug:1.18,sep:1.08,oct:1.03,nov:1.02,dec:1.16,jan:1.12,feb:1.08,mar:1.02}, cheapestMonths:['apr','may'] },
+ { name:'Gdańsk', coords:[54.352,18.6466], basePrice:41, durationLabel:'2h 40m', durationMinutes:160, europe:true, asia:false, direct:true, weekendFriendly:true, prettyScore:8, weatherTag:'Cool Baltic city weather', bestSeason:'Spring / Summer', currency:'PLN (zł)', costLevel:'Cheap', timezoneDiff:'+1 hour', airportTransfer:'Train / bus into centre, usually ~25–35 mins', tags:['Culture','Food','Quiet'], note:'Good value northern Poland city break', monthFactors:{apr:1.0,may:1.03,jun:1.08,jul:1.15,aug:1.17,sep:1.06,oct:1.01,nov:0.96,dec:1.12,jan:0.93,feb:0.94,mar:0.98}, cheapestMonths:['jan','feb','apr'] }
  ];
 
  function getTripScore(dest){
@@ -693,20 +865,20 @@
 
  function getTravelIcons(dest){
  const icons=[], tags=dest.tags||[];
- if(dest.durationMinutes>=300) icons.push({icon:' ',label:'Long-haul'});
- else if(dest.europe) icons.push({icon:' ',label:'City break'});
- if(tags.includes('Beach')) icons.push({icon:' ',label:'Beach'});
- if(tags.includes('Ski')) icons.push({icon:' ',label:'Ski'});
- if(tags.includes('Romantic')) icons.push({icon:' ',label:'Romantic'});
- if(tags.includes('Nightlife')) icons.push({icon:' ',label:'Nightlife'});
- if(tags.includes('Food')) icons.push({icon:' ',label:'Food'});
- if(tags.includes('Culture')) icons.push({icon:' ',label:'Culture'});
- if(tags.includes('Luxury')) icons.push({icon:' ',label:'Luxury'});
- if(tags.includes('Adventure')) icons.push({icon:' ',label:'Adventure'});
- if(tags.includes('Nature')) icons.push({icon:' ',label:'Nature'});
- if(tags.includes('Scenic')) icons.push({icon:' ',label:'Scenic'});
- if(tags.includes('Fashion')) icons.push({icon:' ',label:'Fashion'});
- if(tags.includes('Design')) icons.push({icon:' ',label:'Design'});
+ if(dest.durationMinutes>=300) icons.push({icon:'✈️',label:'Long-haul'});
+ else if(dest.europe) icons.push({icon:'🏙️',label:'City break'});
+ if(tags.includes('Beach')) icons.push({icon:'🏖️',label:'Beach'});
+ if(tags.includes('Ski')) icons.push({icon:'🎿',label:'Ski'});
+ if(tags.includes('Romantic')) icons.push({icon:'💖',label:'Romantic'});
+ if(tags.includes('Nightlife')) icons.push({icon:'🌃',label:'Nightlife'});
+ if(tags.includes('Food')) icons.push({icon:'🍜',label:'Food'});
+ if(tags.includes('Culture')) icons.push({icon:'🏛️',label:'Culture'});
+ if(tags.includes('Luxury')) icons.push({icon:'✨',label:'Luxury'});
+ if(tags.includes('Adventure')) icons.push({icon:'🧭',label:'Adventure'});
+ if(tags.includes('Nature')) icons.push({icon:'🌿',label:'Nature'});
+ if(tags.includes('Scenic')) icons.push({icon:'🏔️',label:'Scenic'});
+ if(tags.includes('Fashion')) icons.push({icon:'👗',label:'Fashion'});
+ if(tags.includes('Design')) icons.push({icon:'🎨',label:'Design'});
  const seen=new Set();
  return icons.filter(item=>!seen.has(item.label)&&seen.add(item.label));
  }
@@ -722,19 +894,29 @@
 
  function popupHtml(dest){
  const icons=getTravelIcons(dest).map(item=>`<span class="popup-icon" title="${item.label}">${item.icon}</span>`).join('');
+ const safeName=escapeJsString(dest.name);
+ const tagHtml=(dest.tags||[]).slice(0,6).map(tag=>`<span class="popup-tag">${tag}</span>`).join('');
  return `<div class="popup-title">${dest.name}</div>
  <div class="popup-icons">${icons}</div>
  <div class="popup-meta">
  <strong>Selected month:</strong> ${monthLabel(currentMonth)}<br>
  <strong>Rough return price:</strong> ${currentPriceLabel(dest)}<br>
  <strong>Flight time:</strong> ${dest.durationLabel}<br>
+ <strong>Best season:</strong> ${dest.bestSeason}<br>
+ <strong>Weather:</strong> ${dest.weatherTag}<br>
+ <strong>Currency / cost:</strong> ${dest.currency} · ${dest.costLevel}<br>
+ <strong>Timezone:</strong> ${dest.timezoneDiff}<br>
+ <strong>Airport transfer:</strong> ${dest.airportTransfer}<br>
  <strong>Trip score:</strong> ${getTripScore(dest)}/100<br>
- <strong>Preset match:</strong> ${activePreset==='none'?'None':matchesPreset(dest)?'Yes':'No'}<br>
  <strong>Flight type:</strong> ${dest.direct?'Direct':'Connection'}<br>
- <strong>Favourite:</strong> ${isFavorite(dest.name)?'Saved':'No'}<br>
- <strong>Visited:</strong> ${isVisited(dest.name)?'Yes':'No'}<br>
- <strong>Want to go:</strong> ${isWantToGo(dest.name)?'Yes':'No'}<br>
+ <strong>Preset match:</strong> ${activePreset==='none'?'None':matchesPreset(dest)?'Yes':'No'}<br>
  <strong>Note:</strong> ${dest.note}
+ </div>
+ <div class="popup-tags">${tagHtml}<span class="popup-tag">Best: ${cheapestMonthLabel(dest)}</span></div>
+ <div class="popup-actions">
+ <button class="popup-action want ${isWantToGo(dest.name)?'active':''}" onclick="event.stopPropagation();toggleWantToGo('${safeName}')">📍 Want to go</button>
+ <button class="popup-action visited ${isVisited(dest.name)?'active':''}" onclick="event.stopPropagation();toggleVisited('${safeName}')">✅ Been</button>
+ <button class="popup-action favorite ${isFavorite(dest.name)?'active':''}" onclick="event.stopPropagation();toggleFavorite('${safeName}')">♥ Save</button>
  </div>`;
  }
 
@@ -756,6 +938,7 @@
 
  function setSelectedDestination(dest){
  selectedDestination=dest;
+ layers.forEach(entry=>entry.card.classList.toggle('selected-card', !!dest && entry.dest.name===dest.name));
  if(!dest){ infoCard.classList.add('hidden'); return; }
  const icons=getTravelIcons(dest);
  let sub=`${dest.europe?'Europe':'Outside Europe'} · ${monthLabel(currentMonth)} · score ${getTripScore(dest)}`;
@@ -940,6 +1123,11 @@
  updateLegend();
  }
 
+ function setSidebarCollapsed(collapsed){
+ app.classList.toggle('sidebar-collapsed',collapsed);
+ requestAnimationFrame(()=>setTimeout(()=>map.invalidateSize(),260));
+ }
+
  function updateHeatmap(){
  const visibleEntries=getVisibleEntries();
  if(!heatEnabled||!visibleEntries.length){ if(map.hasLayer(heatLayer)) map.removeLayer(heatLayer); return; }
@@ -978,20 +1166,14 @@
  const card=document.createElement('div');
  card.className=`card ${dest.weekendFriendly?'weekend-card':''} ${dest.direct?'direct-card':''}`;
  card.innerHTML=`
- <button class="favorite-btn" type="button">${isFavorite(dest.name)?' ':'♡'}</button>
- <div class="tracker-buttons">
- <button class="tracker-btn visited ${isVisited(dest.name)?'active':''}" type="button" title="Visited">✓</button>
- <button class="tracker-btn want ${isWantToGo(dest.name)?'active':''}" type="button" title="Want to go"> </button>
- </div>
- <span class="compare-badge">Compare pick</span>
- <span class="surprise-badge">Surprise</span>
- <span class="visited-badge">Visited</span>
- <span class="want-badge">Want to go</span>
+ <div class="card-top">
+ <div class="card-top-main">
+ <div class="title-wrap">
+ <div class="card-heading-row">
+ <h3>${dest.name}</h3>
  <span class="score-badge">Score ${getTripScore(dest)}</span>
  <span class="preset-badge"></span>
- <div class="card-top">
- <div class="title-wrap">
- <h3>${dest.name}</h3>
+ </div>
  <div class="trip-icons">${cardIcons.map(item=>`<span class="trip-icon" title="${item.label}">${item.icon}</span>`).join('')}</div>
  </div>
  <div class="badge-wrap">
@@ -1005,6 +1187,7 @@
  <span class="badge transfer">Transfer</span>
  <span class="badge tag">${primaryTag}</span>
  ${secondaryTag?`<span class="badge tag">${secondaryTag}</span>`:''}
+ </div>
  </div>
  </div>
  <div class="meta">
@@ -1023,6 +1206,13 @@
  ${secondaryTag?`<span class="tag-chip">${secondaryTag}</span>`:''}
  <span class="score-chip">Score ${getTripScore(dest)}</span>
  <span class="sort-chip"></span>
+ </div>
+ <div class="card-state-row">
+ <div class="tracker-buttons">
+ <button class="tracker-btn want ${isWantToGo(dest.name)?'active':''}" type="button" title="Want to go">📍 Want to go</button>
+ <button class="tracker-btn visited ${isVisited(dest.name)?'active':''}" type="button" title="Visited">✅ Been</button>
+ </div>
+ <button class="favorite-btn ${isFavorite(dest.name)?'active':''}" type="button">${isFavorite(dest.name)?'♥ Saved':'♡ Save'}</button>
  </div>`;
 
  const entry={dest,marker,route,card};
@@ -1094,7 +1284,13 @@
  const destinationMatchesBudget=dest=>getCurrentPrice(dest)<=budgetMax;
  const destinationMatchesDuration=dest=>dest.durationMinutes<=durationMax;
  const destinationMatchesPreset=dest=>matchesPreset(dest);
- const isEntryVisible=entry=>destinationMatchesFilter(entry.dest)&&destinationMatchesSearch(entry.dest)&&destinationMatchesDirect(entry.dest)&&destinationMatchesBudget(entry.dest)&&destinationMatchesDuration(entry.dest)&&destinationMatchesPreset(entry.dest);
+ const destinationMatchesTracker=dest=>{
+ if(resultsTrackerFilter==='favorites') return isFavorite(dest.name);
+ if(resultsTrackerFilter==='visited') return isVisited(dest.name);
+ if(resultsTrackerFilter==='want') return isWantToGo(dest.name);
+ return true;
+ };
+ const isEntryVisible=entry=>destinationMatchesFilter(entry.dest)&&destinationMatchesSearch(entry.dest)&&destinationMatchesDirect(entry.dest)&&destinationMatchesBudget(entry.dest)&&destinationMatchesDuration(entry.dest)&&destinationMatchesPreset(entry.dest)&&destinationMatchesTracker(entry.dest);
  const getVisibleEntries=()=>layers.filter(isEntryVisible);
 
  function updateBudgetUI(){ budgetValue.textContent=budgetMax>=700?'No cap':`€${budgetMax} max`; document.querySelectorAll('.budget-preset-btn').forEach(btn=>btn.classList.toggle('active',Number(btn.dataset.budget)===budgetMax)); }
@@ -1106,6 +1302,7 @@
  function updateSummary(){
  const visibleEntries=getVisibleEntries();
  countValue.textContent=visibleEntries.length;
+ if(resultsSummary) resultsSummary.textContent = visibleEntries.length ? `Showing ${visibleEntries.length} visible destination${visibleEntries.length===1?'':'s'}` : 'No destinations match your filters';
  if(!visibleEntries.length){ cheapestValue.textContent='—'; fastestValue.textContent='—'; return; }
  const cheapest=[...visibleEntries].sort((a,b)=>getCurrentPrice(a.dest)-getCurrentPrice(b.dest))[0].dest;
  const fastest=[...visibleEntries].sort((a,b)=>a.dest.durationMinutes-b.dest.durationMinutes)[0].dest;
@@ -1134,7 +1331,7 @@
  const fav=isFavorite(entry.dest.name);
  entry.card.classList.toggle('favorite-card',fav);
  const btn=entry.card.querySelector('.favorite-btn');
- if(btn){ btn.classList.toggle('active',fav); btn.textContent=fav?' ':'♡'; }
+ if(btn){ btn.classList.toggle('active',fav); btn.textContent=fav?'♥ Saved':'♡ Save'; }
  });
  }
 
@@ -1271,6 +1468,11 @@
  document.querySelectorAll('.sort-btn').forEach(btn=>btn.addEventListener('click',()=>setSort(btn.dataset.sort)));
  document.querySelectorAll('.preset-btn').forEach(btn=>btn.addEventListener('click',()=>setPreset(btn.dataset.preset)));
  monthSelect.addEventListener('change',e=>setMonth(e.target.value));
+ document.querySelectorAll('.results-filter-btn').forEach(btn=>btn.addEventListener('click',()=>{
+ resultsTrackerFilter=btn.dataset.resultsFilter;
+ document.querySelectorAll('.results-filter-btn').forEach(b=>b.classList.toggle('active',b===btn));
+ updateVisibility();
+ }));
  searchInput.addEventListener('input',updateVisibility);
  budgetSlider.addEventListener('input',e=>setBudget(Number(e.target.value)));
  durationSlider.addEventListener('input',e=>setDuration(Number(e.target.value)));
@@ -1283,6 +1485,8 @@
  surpriseBtn.addEventListener('click',()=>triggerSurprise());
  outlinesOnBtn.addEventListener('click',()=>setOutlinesEnabled(true));
  outlinesOffBtn.addEventListener('click',()=>setOutlinesEnabled(false));
+ sidebarToggle.addEventListener('click',()=>setSidebarCollapsed(true));
+ sidebarReopen.addEventListener('click',()=>setSidebarCollapsed(false));
 
  setTheme(false);
  setCompareMode(false);
