@@ -328,6 +328,11 @@
 
  <div class="controls">
  <div class="box">
+ <div class="box-title">Find a destination</div>
+ <input id="searchInput" class="search-input" type="text" placeholder="Search Venice, Seoul, Lisbon..." />
+ </div>
+ 
+ <div class="box">
  <div class="box-title">Trip presets</div>
  <div class="preset-buttons">
  <button class="preset-btn active" data-preset="none">No preset</button>
@@ -451,7 +456,7 @@
  <div class="box">
  <div class="box-title">Flight paths</div>
  <div class="segmented">
- <button id="pathsOn" class="active">All paths on</button><button id="pathsOff">All paths off</button>
+ <button id="pathsOn">All paths on</button><button id="pathsOff" class="active">All paths off</button>
  </div>
  </div>
 
@@ -471,11 +476,6 @@
  <button class="filter-btn" data-filter="quick">Quick flights</button>
  <button class="filter-btn weekend-highlight-btn" data-filter="weekend">Weekend mode</button>
  </div>
- </div>
-
- <div class="box">
- <div class="box-title">Find a destination</div>
- <input id="searchInput" class="search-input" type="text" placeholder="Search Venice, Seoul, Lisbon..." />
  </div>
 
  <div class="box">
@@ -565,7 +565,7 @@
  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
  <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
  <script>
- let currentMonth='apr', mode='price', pathMode='all', activeFilter='all', directOnly=false, budgetMax=700, durationMax=800, sortMode='cheapest',
+ let currentMonth='apr', mode='price', pathMode='off', activeFilter='all', directOnly=false, budgetMax=700, durationMax=800, sortMode='cheapest',
  activeMarkerName=null, heatEnabled=false, selectedDestination=null, darkMode=false, compareMode=false, comparedDestinations=[],
  surpriseDestinationName=null, surpriseTimer=null, activePreset='none', outlinesEnabled=true, resultsTrackerFilter='all';
 
