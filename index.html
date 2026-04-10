@@ -277,7 +277,7 @@
  .app.sidebar-collapsed .sidebar *{visibility:hidden}
  .app.sidebar-collapsed .sidebar-reopen{display:inline-flex}
  .map-shell{display:flex;flex-direction:column;overflow:visible;min-height:auto;background:transparent!important;border:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;gap:14px;padding:14px!important}
- .map-stage{height:72vh;min-height:560px;position:relative;background:var(--panel);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--panel-border);border-radius:26px;box-shadow:var(--shadow);overflow:hidden}
+ .map-stage{height:80vh;min-height:560px;position:relative;background:var(--panel);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--panel-border);border-radius:26px;box-shadow:var(--shadow);overflow:hidden}
  .results-dock{border-top:none;background:var(--panel);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--panel-border);border-radius:26px;box-shadow:var(--shadow);padding:14px 16px 18px}
  .results-toolbar{padding:8px 0 10px;background:transparent;border-bottom:none}
  .results-filter-row{padding:0 0 12px}
@@ -316,6 +316,121 @@
  .tracker-buttons{width:100%}
  .tracker-btn,.favorite-btn{width:100%!important;justify-content:center}
  }
+
+ /* ---------- language-safe layout fix ---------- */
+.sidebar,
+.controls,
+.box,
+.box * ,
+.floating-title,
+.results-toolbar,
+.results-filter-row,
+.card,
+.badge-wrap,
+.meta {
+  min-width: 0;
+}
+
+.segmented,
+.filter-buttons,
+.sort-buttons,
+.preset-buttons {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.season-buttons,
+.budget-presets,
+.duration-presets {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.sidebar button,
+.sidebar select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  line-height: 1.2;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-input {
+  min-width: 0;
+}
+
+.box-title {
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.sidebar {
+  overflow-x: hidden;
+}
+
+.floating-title {
+  max-width: calc(100% - 36px);
+  min-width: 0;
+}
+
+.floating-title .big {
+  white-space: normal;
+  line-height: 1.3;
+  font-size: clamp(14px, 1.1vw, 18px);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.results-filter-btn,
+.badge,
+.info-tag,
+.popup-tag,
+.meta .month-chip,
+.meta .sort-chip,
+.meta .season-chip,
+.meta .currency-chip,
+.meta .cost-chip,
+.meta .timezone-chip,
+.meta .transfer-chip,
+.meta .tag-chip,
+.meta .score-chip {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* slightly tighter sizing for longer German labels */
+body.lang-de .sidebar button,
+body.lang-de .sidebar select {
+  font-size: 13px;
+  padding: 10px 8px;
+}
+
+body.lang-de .box-title {
+  font-size: 12px;
+}
+
+body.lang-de .preset-buttons,
+body.lang-de .segmented,
+body.lang-de .filter-buttons,
+body.lang-de .sort-buttons {
+  gap: 6px;
+}
+
+@media (max-width: 900px) {
+  .season-buttons,
+  .budget-presets,
+  .duration-presets {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
  </style>
 </head>
 <body>
@@ -348,6 +463,16 @@
  <button id="lightModeBtn" class="theme-toggle-btn active">Light mode</button>
  <button id="darkModeBtn" class="theme-toggle-btn">Dark mode</button>
  </div>
+ </div>
+
+ <div class="box">
+ <div class="box-title">Language</div>
+ <select id="languageSelect">
+  <option value="en">English</option>
+  <option value="de">Swiss German</option>
+  <option value="th">ไทย</option>
+  <option value="it">Italiano</option>
+ </select>
  </div>
 
  <div class="box">
@@ -567,7 +692,7 @@
  <script>
  let currentMonth='apr', mode='price', pathMode='off', activeFilter='all', directOnly=false, budgetMax=700, durationMax=800, sortMode='cheapest',
  activeMarkerName=null, heatEnabled=false, selectedDestination=null, darkMode=false, compareMode=false, comparedDestinations=[],
- surpriseDestinationName=null, surpriseTimer=null, activePreset='none', outlinesEnabled=true, resultsTrackerFilter='all';
+ surpriseDestinationName=null, surpriseTimer=null, activePreset='none', outlinesEnabled=true, resultsTrackerFilter='all', currentLanguage=localStorage.getItem('dublinFlightLanguage')||'en';
 
  let favoriteNames=JSON.parse(localStorage.getItem('dublinFlightFavorites')||'[]');
  let visitedNames=JSON.parse(localStorage.getItem('dublinFlightVisited')||'[]');
@@ -597,6 +722,7 @@
  closeInfo=document.getElementById('closeInfo'),
  lightModeBtn=document.getElementById('lightModeBtn'),
  darkModeBtn=document.getElementById('darkModeBtn'),
+ languageSelect=document.getElementById('languageSelect'),
  compareOnBtn=document.getElementById('compareOnBtn'),
  compareOffBtn=document.getElementById('compareOffBtn'),
  compareCard=document.getElementById('compareCard'),
@@ -632,6 +758,166 @@
  const months=[{key:'jan',label:'January'},{key:'feb',label:'February'},{key:'mar',label:'March'},{key:'apr',label:'April'},{key:'may',label:'May'},{key:'jun',label:'June'},{key:'jul',label:'July'},{key:'aug',label:'August'},{key:'sep',label:'September'},{key:'oct',label:'October'},{key:'nov',label:'November'},{key:'dec',label:'December'}];
  const seasonToMonth={spring:'apr',summer:'jul',autumn:'oct',winter:'jan'};
  const dublin={name:'Dublin',coords:[53.3498,-6.2603]};
+
+ const translations={
+ en:{
+  title:'Dublin flight map', eyebrow:'Interactive trip explorer', sub:'Version 29 adds the final feature: <strong>country outlines / shaded regions</strong>.',
+  boxTitles:['Find a destination','Trip presets','Theme','Language','Compare mode','Surprise me','Country outlines / shaded regions','Favourites','Tracker','Trip score','Travel month','Season presets','Budget slider','Max flight time','Sort panel','Bubble mode','Region heatmap','Flight paths','Direct flights','Filters','Quick view'],
+  searchPlaceholder:'Search Venice, Seoul, Lisbon...', light:'Light mode', dark:'Dark mode', normalMode:'Normal mode', compareMode:'Compare mode', surprise:'Surprise me', outlinesOn:'Outlines on', outlinesOff:'Outlines off', saved:'saved', visited:'visited', wantToGo:'want to go',
+  scoreFormula:'Price 45% · Duration 35% · Directness 20%', reset:'Reset', noCap:'No cap', budgetHelper:'Show trips under this price', durationHelper:'Show trips under this duration',
+  seasonButtons:['Spring','Summer','Autumn','Winter'], sortButtons:['Cheapest','Fastest','Best value','Prettiest city break'], bubbleButtons:['Price mode','Duration mode'], heatButtons:['Heatmap off','Heatmap on'], pathButtons:['All paths on','All paths off'], directButtons:['Show all routes','Direct only'],
+  filterButtons:['All trips','Europe only','Asia only','Cheap trips','Quick flights','Weekend mode'], resultsFilters:['All','Saved','Been','Want to go'], summaryLabels:['Visible trips','Cheapest','Fastest'],
+  presetButtons:['No preset','Romantic','Boys trip','Girls trip'], mapMode:'Map mode', results:'Results', showingAll:'Showing all visible trips', surprisePick:'Surprise pick', surpriseDefault:'Tap the button to get a random destination from your current results.',
+  selectDestination:'Select a destination', quickTripSummary:'Quick trip summary', clickAnyPin:'Click any pin to see details', compareTrips:'Compare trips', chooseTwoDestinations:'Choose two destinations', pickFirst:'Pick first destination', pickSecond:'Pick second destination', compareHintA:'Click a pin or card while compare mode is on.', compareHintB:'Then choose another destination to compare.', clear:'Clear', compareFooter:'Compare mode shows price, flight time, trip score, directness and tracker status side by side.',
+  flightType:'Flight type', timezone:'Timezone', bestSeason:'Best season', transfer:'Transfer', pickDestinationNote:'Pick a destination to populate this card.',
+  regionEurope:'Europe', regionOutside:'Outside Europe', favourite:'favourite', regionFilter:'Trip filters', summary:'Summary', bubbleMode:'Map bubble mode', language:'Language',
+  selectedMonth:'Selected month', roughPrice:'Rough return price', flightTime:'Flight time', weather:'Weather', currencyCost:'Currency / cost', airportTransfer:'Airport transfer', tripScore:'Trip score', presetMatch:'Preset match', note:'Note', best:'Best', direct:'Direct', connection:'Connection', none:'None', yes:'Yes', no:'No',
+  months:{jan:'January',feb:'February',mar:'March',apr:'April',may:'May',jun:'June',jul:'July',aug:'August',sep:'September',oct:'October',nov:'November',dec:'December'},
+  save:'♡ Save', savedButton:'♥ Saved', beenButton:'✅ Been', wantButton:'📍 Want to go', noMatch:'No match', noMatchMeta:'There are no visible destinations with your current filters.',
+  cityBreak:'City break', longHaul:'Long-haul', beach:'Beach', ski:'Ski', romantic:'Romantic', nightlife:'Nightlife', food:'Food', culture:'Culture', luxury:'Luxury', adventure:'Adventure', nature:'Nature', scenic:'Scenic', fashion:'Fashion', design:'Design',
+  sortCheapest:'Cheapest', sortFastest:'Fastest', sortBestValue:'Best value', sortPrettiest:'Prettiest city break', value:'Value', beauty:'Beauty', under:'under', pathsOffUnless:'paths off unless selected', allPathsOn:'all paths on', priceMode:'price mode', durationMode:'duration mode', heatmapOn:'heatmap on', planeAnimationOn:'plane animation on', directOnly:'direct only', weekendMode:'weekend mode', outlinesOnLegend:'outlines on', outlinesOffLegend:'outlines off'
+ },
+ de:{
+  title:'Dublin Flugkarte', eyebrow:'Interaktiver Reise-Explorer', sub:'Version 29 enthält jetzt das finale Feature: <strong>Länderumrisse / schattierte Regionen</strong>.',
+  boxTitles:['Reiseziel suchen','Reisestile','Thema','Sprache','Vergleichsmodus','Überrasch mich','Länderumrisse / schattierte Regionen','Favoriten','Tracker','Trip-Score','Reisemonat','Jahreszeiten','Budget-Schieber','Max. Flugzeit','Sortierung','Kartenblasen-Modus','Regionen-Heatmap','Flugrouten','Direktflüge','Filter','Übersicht'],
+  searchPlaceholder:'Suche nach Venedig, Seoul, Lissabon...', light:'Hell', dark:'Dunkel', normalMode:'Normal', compareMode:'Vergleichen', surprise:'Überrasch mich', outlinesOn:'Umrisse an', outlinesOff:'Umrisse aus', saved:'gespeichert', visited:'besucht', wantToGo:'möchte hin',
+  scoreFormula:'Preis 45% · Dauer 35% · Direktheit 20%', reset:'Zurücksetzen', noCap:'Kein Limit', budgetHelper:'Trips unter diesem Preis zeigen', durationHelper:'Trips unter dieser Dauer zeigen',
+  seasonButtons:['Frühling','Sommer','Herbst','Winter'], sortButtons:['Günstigste','Schnellste','Bester Wert','Schönste Städtereise'], bubbleButtons:['Preis-Modus','Dauer-Modus'], heatButtons:['Heatmap aus','Heatmap an'], pathButtons:['Alle Routen an','Alle Routen aus'], directButtons:['Alle Routen','Nur direkt'],
+  filterButtons:['Alle Trips','Nur Europa','Nur Asien','Günstige Trips','Kurze Flüge','Wochenendmodus'], resultsFilters:['Alle','Gespeichert','Besucht','Möchte hin'], summaryLabels:['Sichtbare Trips','Günstigste','Schnellste'],
+  presetButtons:['Kein Stil','Romantisch','Männertrip','Mädels-Trip'], mapMode:'Kartenmodus', results:'Ergebnisse', showingAll:'Alle sichtbaren Ziele', surprisePick:'Überraschungsziel', surpriseDefault:'Drücke den Button für ein zufälliges Ziel aus deinen aktuellen Filtern.',
+  selectDestination:'Ziel auswählen', quickTripSummary:'Kurze Reiseübersicht', clickAnyPin:'Klicke auf einen Pin für Details', compareTrips:'Trips vergleichen', chooseTwoDestinations:'Zwei Ziele auswählen', pickFirst:'Erstes Ziel wählen', pickSecond:'Zweites Ziel wählen', compareHintA:'Klicke auf einen Pin oder eine Karte im Vergleichsmodus.', compareHintB:'Wähle dann ein zweites Ziel zum Vergleichen.', clear:'Löschen', compareFooter:'Der Vergleichsmodus zeigt Preis, Flugzeit, Trip-Score, Direktheit und Tracker-Status nebeneinander.',
+  flightType:'Flugtyp', timezone:'Zeitzone', bestSeason:'Beste Saison', transfer:'Transfer', pickDestinationNote:'Wähle ein Ziel, um diese Karte zu füllen.',
+  regionEurope:'Europa', regionOutside:'Außerhalb Europas', favourite:'Favorit', regionFilter:'Filter', summary:'Übersicht', bubbleMode:'Kartenblasen-Modus', language:'Sprache',
+  selectedMonth:'Ausgewählter Monat', roughPrice:'Ca. Rückflugpreis', flightTime:'Flugzeit', weather:'Wetter', currencyCost:'Währung / Kosten', airportTransfer:'Flughafentransfer', tripScore:'Trip-Score', presetMatch:'Preset passt', note:'Hinweis', best:'Beste', direct:'Direkt', connection:'Mit Umstieg', none:'Keine', yes:'Ja', no:'Nein',
+  months:{jan:'Januar',feb:'Februar',mar:'März',apr:'April',may:'Mai',jun:'Juni',jul:'Juli',aug:'August',sep:'September',oct:'Oktober',nov:'November',dec:'Dezember'},
+  save:'♡ Speichern', savedButton:'♥ Gespeichert', beenButton:'✅ Gewesen', wantButton:'📍 Möchte hin', noMatch:'Kein Treffer', noMatchMeta:'Mit deinen aktuellen Filtern sind keine Ziele sichtbar.',
+  cityBreak:'Städtereise', longHaul:'Langstrecke', beach:'Strand', ski:'Ski', romantic:'Romantisch', nightlife:'Nachtleben', food:'Essen', culture:'Kultur', luxury:'Luxus', adventure:'Abenteuer', nature:'Natur', scenic:'Landschaft', fashion:'Mode', design:'Design',
+  sortCheapest:'Günstigste', sortFastest:'Schnellste', sortBestValue:'Bester Wert', sortPrettiest:'Schönste Städtereise', value:'Wert', beauty:'Schönheit', under:'unter', pathsOffUnless:'Routen aus außer bei Auswahl', allPathsOn:'alle Routen an', priceMode:'Preis-Modus', durationMode:'Dauer-Modus', heatmapOn:'Heatmap an', planeAnimationOn:'Flugzeug-Animation an', directOnly:'nur direkt', weekendMode:'Wochenendmodus', outlinesOnLegend:'Umrisse an', outlinesOffLegend:'Umrisse aus'
+ },
+ th:{
+  title:'แผนที่เที่ยวบินจากดับลิน', eyebrow:'ตัวสำรวจทริปแบบโต้ตอบ', sub:'เวอร์ชัน 29 เพิ่มฟีเจอร์สุดท้ายแล้ว: <strong>เส้นขอบประเทศ / พื้นที่ไฮไลต์</strong>.',
+  boxTitles:['ค้นหาปลายทาง','สไตล์ทริป','ธีม','ภาษา','โหมดเปรียบเทียบ','สุ่มให้หน่อย','เส้นขอบประเทศ / พื้นที่ไฮไลต์','รายการโปรด','ตัวติดตาม','คะแนนทริป','เดือนเดินทาง','ฤดูกาล','ตัวเลื่อนงบประมาณ','เวลาเที่ยวบินสูงสุด','การเรียงลำดับ','โหมดฟองบนแผนที่','ฮีตแมปภูมิภาค','เส้นทางบิน','เที่ยวบินตรง','ตัวกรอง','สรุป'],
+  searchPlaceholder:'ค้นหา Venice, Seoul, Lisbon...', light:'โหมดสว่าง', dark:'โหมดมืด', normalMode:'โหมดปกติ', compareMode:'โหมดเปรียบเทียบ', surprise:'สุ่มให้หน่อย', outlinesOn:'เปิดเส้นขอบ', outlinesOff:'ปิดเส้นขอบ', saved:'ที่บันทึก', visited:'เคยไป', wantToGo:'อยากไป',
+  scoreFormula:'ราคา 45% · เวลา 35% · บินตรง 20%', reset:'รีเซ็ต', noCap:'ไม่จำกัด', budgetHelper:'แสดงทริปที่ต่ำกว่าราคานี้', durationHelper:'แสดงทริปที่สั้นกว่านี้',
+  seasonButtons:['ฤดูใบไม้ผลิ','ฤดูร้อน','ฤดูใบไม้ร่วง','ฤดูหนาว'], sortButtons:['ถูกที่สุด','เร็วที่สุด','คุ้มที่สุด','เมืองสวยที่สุด'], bubbleButtons:['โหมดราคา','โหมดเวลา'], heatButtons:['ปิดฮีตแมป','เปิดฮีตแมป'], pathButtons:['เปิดทุกเส้นทาง','ปิดทุกเส้นทาง'], directButtons:['แสดงทุกเส้นทาง','เฉพาะบินตรง'],
+  filterButtons:['ทุกทริป','เฉพาะยุโรป','เฉพาะเอเชีย','ทริปราคาถูก','เที่ยวบินสั้น','โหมดทริปสุดสัปดาห์'], resultsFilters:['ทั้งหมด','บันทึกแล้ว','เคยไป','อยากไป'], summaryLabels:['ทริปที่มองเห็น','ถูกที่สุด','เร็วที่สุด'],
+  presetButtons:['ไม่มีพรีเซ็ต','โรแมนติก','ทริปผู้ชาย','ทริปผู้หญิง'], mapMode:'โหมดแผนที่', results:'ผลลัพธ์', showingAll:'กำลังแสดงปลายทางทั้งหมดที่มองเห็น', surprisePick:'ปลายทางสุ่ม', surpriseDefault:'กดปุ่มเพื่อสุ่มปลายทางจากตัวกรองปัจจุบันของคุณ',
+  selectDestination:'เลือกปลายทาง', quickTripSummary:'สรุปทริปอย่างย่อ', clickAnyPin:'กดที่หมุดเพื่อดูรายละเอียด', compareTrips:'เปรียบเทียบทริป', chooseTwoDestinations:'เลือก 2 ปลายทาง', pickFirst:'เลือกปลายทางแรก', pickSecond:'เลือกปลายทางที่สอง', compareHintA:'คลิกหมุดหรือการ์ดเมื่อเปิดโหมดเปรียบเทียบ', compareHintB:'จากนั้นเลือกอีกที่เพื่อเปรียบเทียบ', clear:'ล้าง', compareFooter:'โหมดเปรียบเทียบจะแสดงราคา เวลาเที่ยวบิน คะแนนทริป ความตรง และสถานะตัวติดตามแบบเทียบกัน',
+  flightType:'ประเภทเที่ยวบิน', timezone:'เขตเวลา', bestSeason:'ฤดูที่เหมาะสุด', transfer:'การต่อเข้าเมือง', pickDestinationNote:'เลือกปลายทางเพื่อเติมข้อมูลในการ์ดนี้',
+  regionEurope:'ยุโรป', regionOutside:'นอกยุโรป', favourite:'รายการโปรด', regionFilter:'ตัวกรองทริป', summary:'สรุป', bubbleMode:'โหมดฟองบนแผนที่', language:'ภาษา',
+  selectedMonth:'เดือนที่เลือก', roughPrice:'ราคารวมไปกลับโดยประมาณ', flightTime:'เวลาเที่ยวบิน', weather:'สภาพอากาศ', currencyCost:'สกุลเงิน / ระดับค่าใช้จ่าย', airportTransfer:'การเดินทางจากสนามบิน', tripScore:'คะแนนทริป', presetMatch:'ตรงกับพรีเซ็ต', note:'หมายเหตุ', best:'ดีที่สุด', direct:'บินตรง', connection:'มีต่อเครื่อง', none:'ไม่มี', yes:'ใช่', no:'ไม่',
+  months:{jan:'มกราคม',feb:'กุมภาพันธ์',mar:'มีนาคม',apr:'เมษายน',may:'พฤษภาคม',jun:'มิถุนายน',jul:'กรกฎาคม',aug:'สิงหาคม',sep:'กันยายน',oct:'ตุลาคม',nov:'พฤศจิกายน',dec:'ธันวาคม'},
+  save:'♡ บันทึก', savedButton:'♥ บันทึกแล้ว', beenButton:'✅ เคยไป', wantButton:'📍 อยากไป', noMatch:'ไม่พบผลลัพธ์', noMatchMeta:'ไม่มีปลายทางที่ตรงกับตัวกรองปัจจุบันของคุณ',
+  cityBreak:'ทริปเมือง', longHaul:'เที่ยวบินไกล', beach:'ชายหาด', ski:'สกี', romantic:'โรแมนติก', nightlife:'ไนต์ไลฟ์', food:'อาหาร', culture:'วัฒนธรรม', luxury:'หรูหรา', adventure:'ผจญภัย', nature:'ธรรมชาติ', scenic:'วิวสวย', fashion:'แฟชั่น', design:'ดีไซน์',
+  sortCheapest:'ถูกที่สุด', sortFastest:'เร็วที่สุด', sortBestValue:'คุ้มที่สุด', sortPrettiest:'เมืองสวยที่สุด', value:'ความคุ้มค่า', beauty:'ความสวย', under:'ต่ำกว่า', pathsOffUnless:'ปิดเส้นทางจนกว่าจะเลือก', allPathsOn:'เปิดทุกเส้นทาง', priceMode:'โหมดราคา', durationMode:'โหมดเวลา', heatmapOn:'เปิดฮีตแมป', planeAnimationOn:'เปิดแอนิเมชันเครื่องบิน', directOnly:'เฉพาะบินตรง', weekendMode:'โหมดสุดสัปดาห์', outlinesOnLegend:'เปิดเส้นขอบ', outlinesOffLegend:'ปิดเส้นขอบ'
+ },
+ it:{
+  title:'Mappa voli da Dublino', eyebrow:'Esploratore viaggi interattivo', sub:'La versione 29 aggiunge la funzione finale: <strong>contorni dei paesi / regioni evidenziate</strong>.',
+  boxTitles:['Trova una destinazione','Stili di viaggio','Tema','Lingua','Modalità confronto','Sorpresa','Contorni dei paesi / regioni evidenziate','Preferiti','Tracker','Punteggio viaggio','Mese di viaggio','Stagioni','Budget','Durata massima volo','Ordinamento','Modalità bolle mappa','Heatmap regionale','Rotte di volo','Voli diretti','Filtri','Riepilogo'],
+  searchPlaceholder:'Cerca Venezia, Seoul, Lisbona...', light:'Modalità chiara', dark:'Modalità scura', normalMode:'Modalità normale', compareMode:'Modalità confronto', surprise:'Scegli per me', outlinesOn:'Contorni attivi', outlinesOff:'Contorni disattivi', saved:'salvati', visited:'visitati', wantToGo:'da visitare',
+  scoreFormula:'Prezzo 45% · Durata 35% · Direttezza 20%', reset:'Reimposta', noCap:'Nessun limite', budgetHelper:'Mostra viaggi sotto questo prezzo', durationHelper:'Mostra viaggi sotto questa durata',
+  seasonButtons:['Primavera','Estate','Autunno','Inverno'], sortButtons:['Più economici','Più veloci','Miglior valore','City break più bello'], bubbleButtons:['Modalità prezzo','Modalità durata'], heatButtons:['Heatmap off','Heatmap on'], pathButtons:['Tutte le rotte on','Tutte le rotte off'], directButtons:['Mostra tutte le rotte','Solo diretti'],
+  filterButtons:['Tutti i viaggi','Solo Europa','Solo Asia','Viaggi economici','Voli brevi','Modalità weekend'], resultsFilters:['Tutti','Salvati','Visitati','Da visitare'], summaryLabels:['Viaggi visibili','Più economico','Più veloce'],
+  presetButtons:['Nessun preset','Romantico','Viaggio ragazzi','Viaggio ragazze'], mapMode:'Modalità mappa', results:'Risultati', showingAll:'Mostra tutte le destinazioni visibili', surprisePick:'Scelta casuale', surpriseDefault:'Premi il pulsante per scegliere una destinazione casuale in base ai filtri correnti.',
+  selectDestination:'Seleziona una destinazione', quickTripSummary:'Riepilogo rapido del viaggio', clickAnyPin:'Clicca un pin per vedere i dettagli', compareTrips:'Confronta viaggi', chooseTwoDestinations:'Scegli due destinazioni', pickFirst:'Scegli la prima destinazione', pickSecond:'Scegli la seconda destinazione', compareHintA:'Clicca un pin o una card in modalità confronto.', compareHintB:'Poi scegli un’altra destinazione da confrontare.', clear:'Cancella', compareFooter:'La modalità confronto mostra prezzo, durata del volo, punteggio viaggio, direttezza e stato tracker affiancati.',
+  flightType:'Tipo di volo', timezone:'Fuso orario', bestSeason:'Stagione migliore', transfer:'Trasferimento', pickDestinationNote:'Scegli una destinazione per riempire questa scheda.',
+  regionEurope:'Europa', regionOutside:'Fuori Europa', favourite:'preferito', regionFilter:'Filtri viaggio', summary:'Riepilogo', bubbleMode:'Modalità bolle mappa', language:'Lingua',
+  selectedMonth:'Mese selezionato', roughPrice:'Prezzo andata/ritorno indicativo', flightTime:'Durata volo', weather:'Meteo', currencyCost:'Valuta / costo', airportTransfer:'Trasferimento aeroporto', tripScore:'Punteggio viaggio', presetMatch:'Corrispondenza preset', note:'Nota', best:'Migliore', direct:'Diretto', connection:'Con scalo', none:'Nessuno', yes:'Sì', no:'No',
+  months:{jan:'Gennaio',feb:'Febbraio',mar:'Marzo',apr:'Aprile',may:'Maggio',jun:'Giugno',jul:'Luglio',aug:'Agosto',sep:'Settembre',oct:'Ottobre',nov:'Novembre',dec:'Dicembre'},
+  save:'♡ Salva', savedButton:'♥ Salvato', beenButton:'✅ Già stato', wantButton:'📍 Da visitare', noMatch:'Nessun risultato', noMatchMeta:'Non ci sono destinazioni visibili con i filtri attuali.',
+  cityBreak:'City break', longHaul:'Lungo raggio', beach:'Spiaggia', ski:'Sci', romantic:'Romantico', nightlife:'Vita notturna', food:'Cibo', culture:'Cultura', luxury:'Lusso', adventure:'Avventura', nature:'Natura', scenic:'Panoramico', fashion:'Moda', design:'Design',
+  sortCheapest:'Più economici', sortFastest:'Più veloci', sortBestValue:'Miglior valore', sortPrettiest:'City break più bello', value:'Valore', beauty:'Bellezza', under:'sotto', pathsOffUnless:'rotte off salvo selezione', allPathsOn:'tutte le rotte on', priceMode:'modalità prezzo', durationMode:'modalità durata', heatmapOn:'heatmap on', planeAnimationOn:'animazione aereo on', directOnly:'solo diretti', weekendMode:'modalità weekend', outlinesOnLegend:'contorni on', outlinesOffLegend:'contorni off'
+ }
+ };
+
+ function t(key){
+  const parts=key.split('.');
+  let value=translations[currentLanguage];
+  for(const part of parts) value=value?.[part];
+  return value ?? translations.en[key] ?? key;
+ }
+
+ function updateMonthSelectLabels(){
+  [...monthSelect.options].forEach(opt=>{ opt.textContent=t(`months.${opt.value}`); });
+ }
+
+ function updateLanguageClass(){
+  document.body.classList.remove('lang-en','lang-de','lang-th','lang-it');
+  document.body.classList.add(`lang-${currentLanguage}`);
+}
+
+ function applyLanguage(){
+  updateLanguageClass();
+  localStorage.setItem('dublinFlightLanguage',currentLanguage);
+  document.documentElement.lang=currentLanguage==='de'?'de-CH':currentLanguage;
+  if(languageSelect) languageSelect.value=currentLanguage;
+  document.querySelector('h1').textContent=t('title');
+  document.querySelector('.eyebrow').innerHTML='<span class="mini-dot"></span> '+t('eyebrow');
+  document.querySelector('.sub').innerHTML=t('sub');
+  const boxKeys=['findDestination','tripPresets','theme','language','compareMode','surprise','countryOutlines','favourites','tracker','tripScore','travelMonth','seasonPresets','budgetSlider','maxFlightTime','sortPanel','bubbleMode','regionHeatmap','flightPaths','directFlights','filters','quickView'];
+  const boxTitles=[t('boxTitles.0'),t('boxTitles.1'),t('boxTitles.2'),t('boxTitles.3'),t('boxTitles.4'),t('boxTitles.5'),t('boxTitles.6'),t('boxTitles.7'),t('boxTitles.8'),t('boxTitles.9'),t('boxTitles.10'),t('boxTitles.11'),t('boxTitles.12'),t('boxTitles.13'),t('boxTitles.14'),t('boxTitles.15'),t('boxTitles.16'),t('boxTitles.17'),t('boxTitles.18'),t('boxTitles.19'),t('boxTitles.20')];
+  document.querySelectorAll('.controls .box-title').forEach((el,i)=>{ if(boxTitles[i]) el.textContent=boxTitles[i]; });
+  searchInput.placeholder=t('searchPlaceholder');
+  lightModeBtn.textContent=t('light');
+  darkModeBtn.textContent=t('dark');
+  languageSelect.options[0].textContent='English';
+  languageSelect.options[1].textContent='Swiss German';
+  languageSelect.options[2].textContent='ไทย';
+  languageSelect.options[3].textContent='Italiano';
+  compareOffBtn.textContent=t('normalMode');
+  compareOnBtn.textContent=t('compareMode');
+  surpriseBtn.textContent=t('surprise');
+  outlinesOnBtn.textContent=t('outlinesOn');
+  outlinesOffBtn.textContent=t('outlinesOff');
+  sidebarToggle.textContent=t('filters');
+  sidebarReopen.textContent=t('filters');
+  document.getElementById('resetMonth').textContent=t('reset');
+  document.querySelectorAll('.season-btn').forEach((btn,i)=>btn.textContent=t(`seasonButtons.${i}`));
+  document.querySelectorAll('.slider-header .helper')[0].textContent=t('budgetHelper');
+  document.querySelectorAll('.slider-header .helper')[1].textContent=t('durationHelper');
+  document.querySelectorAll('.budget-preset-btn')[3].textContent=t('noCap');
+  document.querySelectorAll('.duration-preset-btn')[3].textContent=t('noCap');
+  document.getElementById('directOff').textContent=t('directButtons.0');
+  document.getElementById('directOn').textContent=t('directButtons.1');
+  document.querySelectorAll('.filter-btn').forEach((btn,i)=>btn.textContent=t(`filterButtons.${i}`));
+  document.querySelectorAll('.sort-btn').forEach((btn,i)=>btn.textContent=t(`sortButtons.${i}`));
+  document.querySelectorAll('.preset-btn').forEach((btn,i)=>btn.textContent=t(`presetButtons.${i}`));
+  document.getElementById('modePrice').textContent=t('bubbleButtons.0');
+  document.getElementById('modeDuration').textContent=t('bubbleButtons.1');
+  document.getElementById('heatOff').textContent=t('heatButtons.0');
+  document.getElementById('heatOn').textContent=t('heatButtons.1');
+  document.getElementById('pathsOn').textContent=t('pathButtons.0');
+  document.getElementById('pathsOff').textContent=t('pathButtons.1');
+  document.querySelectorAll('.results-filter-btn').forEach((btn,i)=>btn.textContent=t(`resultsFilters.${i}`));
+  document.querySelectorAll('.summary-pill .label').forEach((el,i)=>el.textContent=t(`summaryLabels.${i}`));
+  document.querySelector('.floating-title .small').textContent=t('mapMode');
+  document.querySelector('.results-toolbar-title').textContent=t('results');
+  document.querySelector('.surprise-title').textContent=t('surprisePick');
+  if(!surpriseDestinationName) surpriseMeta.textContent=t('surpriseDefault');
+  if(!selectedDestination){ infoTitle.textContent=t('selectDestination'); infoSub.textContent=t('quickTripSummary'); infoDuration.textContent=t('clickAnyPin'); infoNote.textContent=t('pickDestinationNote'); }
+  document.querySelector('.compare-title').textContent=t('compareTrips');
+  if(comparedDestinations.length===0) compareSub.textContent=t('chooseTwoDestinations');
+  clearCompareBtn.textContent=t('clear');
+  document.querySelector('#compareA .compare-name').textContent=t('pickFirst');
+  document.querySelector('#compareB .compare-name').textContent=t('pickSecond');
+  document.querySelector('#compareA .compare-stat').textContent=t('compareHintA');
+  document.querySelector('#compareB .compare-stat').textContent=t('compareHintB');
+  compareFooter.textContent=t('compareFooter');
+  document.querySelectorAll('.info-pill .k')[0].textContent=t('flightType');
+  document.querySelectorAll('.info-pill .k')[1].textContent=t('timezone');
+  document.querySelectorAll('.info-pill .k')[2].textContent=t('bestSeason');
+  document.querySelectorAll('.info-pill .k')[3].textContent=t('transfer');
+  updateMonthSelectLabels();
+  updateCounts();
+  updateSummary();
+  updateLegend();
+  updateFavoriteVisuals();
+  updateTrackerVisuals();
+  if(selectedDestination) setSelectedDestination(selectedDestination);
+  updateCompareCard();
+  updateMarkerStyles();
+ }
+
 
  const highlightedCountries = {
  "United Kingdom":"europe",
@@ -720,12 +1006,12 @@
  }
 
  function setTheme(isDark){ darkMode=isDark; document.body.classList.toggle('dark-mode',darkMode); lightModeBtn.classList.toggle('active',!darkMode); darkModeBtn.classList.toggle('active',darkMode); updateCountryOutlines(); }
- function monthLabel(key){ return months.find(m=>m.key===key)?.label || key; }
- function formatDuration(minutes){ if(minutes>=800) return 'No cap'; const h=Math.floor(minutes/60), m=minutes%60; return `${h}h ${String(m).padStart(2,'0')}m max`; }
+ function monthLabel(key){ return t(`months.${key}`) || key; }
+ function formatDuration(minutes){ if(minutes>=800) return t('noCap'); const h=Math.floor(minutes/60), m=minutes%60; return `${h}h ${String(m).padStart(2,'0')}m max`; }
  function isFavorite(name){ return favoriteNames.includes(name); }
  function isVisited(name){ return visitedNames.includes(name); }
  function isWantToGo(name){ return wantToGoNames.includes(name); }
- function updateCounts(){ favoritesCount.textContent=`${favoriteNames.length} saved`; visitedCount.textContent=`${visitedNames.length} visited`; wantCount.textContent=`${wantToGoNames.length} want to go`; }
+ function updateCounts(){ favoritesCount.textContent=`${favoriteNames.length} ${t('saved')}`; visitedCount.textContent=`${visitedNames.length} ${t('visited')}`; wantCount.textContent=`${wantToGoNames.length} ${t('wantToGo')}`; }
 
  function toggleFavorite(name){
  const idx=favoriteNames.indexOf(name);
@@ -835,7 +1121,7 @@
  }
 
  function getCurrentPrice(dest){ const factor=dest.monthFactors?.[currentMonth] ?? 1; return Math.round(dest.basePrice*factor); }
- function currentPriceLabel(dest){ return `from €${getCurrentPrice(dest)} return`; }
+ function currentPriceLabel(dest){ return `${t('roughPrice')}: €${getCurrentPrice(dest)}`; }
  function cheapestMonthLabel(dest){ return (dest.cheapestMonths||[]).map(monthLabel).join(' / '); }
  function interpolateColor(ratio){ return `hsl(${120-(120*ratio)}, 78%, 52%)`; }
  function getModeValue(dest){ return mode==='price' ? getCurrentPrice(dest) : dest.durationMinutes; }
@@ -858,27 +1144,27 @@
  function getSortChipLabel(dest){
  if(sortMode==='cheapest') return `€${getCurrentPrice(dest)}`;
  if(sortMode==='fastest') return dest.durationLabel;
- if(sortMode==='bestValue') return `Value ${Math.round(getBestValueScore(dest))}`;
- if(sortMode==='prettiest') return `Beauty ${dest.prettyScore}/10`;
+ if(sortMode==='bestValue') return `${t('value')} ${Math.round(getBestValueScore(dest))}`;
+ if(sortMode==='prettiest') return `${t('beauty')} ${dest.prettyScore}/10`;
  return '';
  }
 
  function getTravelIcons(dest){
  const icons=[], tags=dest.tags||[];
- if(dest.durationMinutes>=300) icons.push({icon:'✈️',label:'Long-haul'});
- else if(dest.europe) icons.push({icon:'🏙️',label:'City break'});
- if(tags.includes('Beach')) icons.push({icon:'🏖️',label:'Beach'});
- if(tags.includes('Ski')) icons.push({icon:'🎿',label:'Ski'});
- if(tags.includes('Romantic')) icons.push({icon:'💖',label:'Romantic'});
- if(tags.includes('Nightlife')) icons.push({icon:'🌃',label:'Nightlife'});
- if(tags.includes('Food')) icons.push({icon:'🍜',label:'Food'});
- if(tags.includes('Culture')) icons.push({icon:'🏛️',label:'Culture'});
- if(tags.includes('Luxury')) icons.push({icon:'✨',label:'Luxury'});
- if(tags.includes('Adventure')) icons.push({icon:'🧭',label:'Adventure'});
- if(tags.includes('Nature')) icons.push({icon:'🌿',label:'Nature'});
- if(tags.includes('Scenic')) icons.push({icon:'🏔️',label:'Scenic'});
- if(tags.includes('Fashion')) icons.push({icon:'👗',label:'Fashion'});
- if(tags.includes('Design')) icons.push({icon:'🎨',label:'Design'});
+ if(dest.durationMinutes>=300) icons.push({icon:'✈️',label:t('longHaul')});
+ else if(dest.europe) icons.push({icon:'🏙️',label:t('cityBreak')});
+ if(tags.includes('Beach')) icons.push({icon:'🏖️',label:t('beach')});
+ if(tags.includes('Ski')) icons.push({icon:'🎿',label:t('ski')});
+ if(tags.includes('Romantic')) icons.push({icon:'💖',label:t('romantic')});
+ if(tags.includes('Nightlife')) icons.push({icon:'🌃',label:t('nightlife')});
+ if(tags.includes('Food')) icons.push({icon:'🍜',label:t('food')});
+ if(tags.includes('Culture')) icons.push({icon:'🏛️',label:t('culture')});
+ if(tags.includes('Luxury')) icons.push({icon:'✨',label:t('luxury')});
+ if(tags.includes('Adventure')) icons.push({icon:'🧭',label:t('adventure')});
+ if(tags.includes('Nature')) icons.push({icon:'🌿',label:t('nature')});
+ if(tags.includes('Scenic')) icons.push({icon:'🏔️',label:t('scenic')});
+ if(tags.includes('Fashion')) icons.push({icon:'👗',label:t('fashion')});
+ if(tags.includes('Design')) icons.push({icon:'🎨',label:t('design')});
  const seen=new Set();
  return icons.filter(item=>!seen.has(item.label)&&seen.add(item.label));
  }
@@ -899,24 +1185,24 @@
  return `<div class="popup-title">${dest.name}</div>
  <div class="popup-icons">${icons}</div>
  <div class="popup-meta">
- <strong>Selected month:</strong> ${monthLabel(currentMonth)}<br>
- <strong>Rough return price:</strong> ${currentPriceLabel(dest)}<br>
- <strong>Flight time:</strong> ${dest.durationLabel}<br>
- <strong>Best season:</strong> ${dest.bestSeason}<br>
- <strong>Weather:</strong> ${dest.weatherTag}<br>
- <strong>Currency / cost:</strong> ${dest.currency} · ${dest.costLevel}<br>
- <strong>Timezone:</strong> ${dest.timezoneDiff}<br>
- <strong>Airport transfer:</strong> ${dest.airportTransfer}<br>
- <strong>Trip score:</strong> ${getTripScore(dest)}/100<br>
- <strong>Flight type:</strong> ${dest.direct?'Direct':'Connection'}<br>
- <strong>Preset match:</strong> ${activePreset==='none'?'None':matchesPreset(dest)?'Yes':'No'}<br>
- <strong>Note:</strong> ${dest.note}
+ <strong>${t('selectedMonth')}:</strong> ${monthLabel(currentMonth)}<br>
+ <strong>${t('roughPrice')}:</strong> ${currentPriceLabel(dest)}<br>
+ <strong>${t('flightTime')}:</strong> ${dest.durationLabel}<br>
+ <strong>${t('bestSeason')}:</strong> ${dest.bestSeason}<br>
+ <strong>${t('weather')}:</strong> ${dest.weatherTag}<br>
+ <strong>${t('currencyCost')}:</strong> ${dest.currency} · ${dest.costLevel}<br>
+ <strong>${t('timezone')}:</strong> ${dest.timezoneDiff}<br>
+ <strong>${t('airportTransfer')}:</strong> ${dest.airportTransfer}<br>
+ <strong>${t('tripScore')}:</strong> ${getTripScore(dest)}/100<br>
+ <strong>${t('flightType')}:</strong> ${dest.direct?t('direct'):t('connection')}<br>
+ <strong>${t('presetMatch')}:</strong> ${activePreset==='none'?t('none'):matchesPreset(dest)?t('yes'):t('no')}<br>
+ <strong>${t('note')}:</strong> ${dest.note}
  </div>
- <div class="popup-tags">${tagHtml}<span class="popup-tag">Best: ${cheapestMonthLabel(dest)}</span></div>
+ <div class="popup-tags">${tagHtml}<span class="popup-tag">${t('best')}: ${cheapestMonthLabel(dest)}</span></div>
  <div class="popup-actions">
- <button class="popup-action want ${isWantToGo(dest.name)?'active':''}" onclick="event.stopPropagation();toggleWantToGo('${safeName}')">📍 Want to go</button>
- <button class="popup-action visited ${isVisited(dest.name)?'active':''}" onclick="event.stopPropagation();toggleVisited('${safeName}')">✅ Been</button>
- <button class="popup-action favorite ${isFavorite(dest.name)?'active':''}" onclick="event.stopPropagation();toggleFavorite('${safeName}')">♥ Save</button>
+ <button class="popup-action want ${isWantToGo(dest.name)?'active':''}" onclick="event.stopPropagation();toggleWantToGo('${safeName}')">${t('wantButton')}</button>
+ <button class="popup-action visited ${isVisited(dest.name)?'active':''}" onclick="event.stopPropagation();toggleVisited('${safeName}')">${t('beenButton')}</button>
+ <button class="popup-action favorite ${isFavorite(dest.name)?'active':''}" onclick="event.stopPropagation();toggleFavorite('${safeName}')">${isFavorite(dest.name)?t('savedButton'):t('save')}</button>
  </div>`;
  }
 
@@ -941,43 +1227,43 @@
  layers.forEach(entry=>entry.card.classList.toggle('selected-card', !!dest && entry.dest.name===dest.name));
  if(!dest){ infoCard.classList.add('hidden'); return; }
  const icons=getTravelIcons(dest);
- let sub=`${dest.europe?'Europe':'Outside Europe'} · ${monthLabel(currentMonth)} · score ${getTripScore(dest)}`;
+ let sub=`${dest.europe?t('regionEurope'):t('regionOutside')} · ${monthLabel(currentMonth)} · ${t('tripScore').toLowerCase()} ${getTripScore(dest)}`;
  if(activePreset!=='none') sub += ` · ${activePreset}`;
- if(isFavorite(dest.name)) sub+=' · favourite';
- if(isVisited(dest.name)) sub+=' · visited';
- if(isWantToGo(dest.name)) sub+=' · want to go';
+ if(isFavorite(dest.name)) sub+=` · ${t('favourite')}`;
+ if(isVisited(dest.name)) sub+=` · ${t('visited')}`;
+ if(isWantToGo(dest.name)) sub+=` · ${t('wantToGo')}`;
  infoTitle.textContent=dest.name;
  infoSub.textContent=sub;
  infoPrice.textContent=`€${getCurrentPrice(dest)}`;
  infoDuration.textContent=`${dest.durationLabel} · ${dest.currency} · ${dest.costLevel}`;
  infoIcons.innerHTML=icons.map(item=>`<span class="info-icon">${item.icon} ${item.label}</span>`).join('');
- infoFlightType.textContent=dest.direct?'Direct':'Connection';
+ infoFlightType.textContent=dest.direct?t('direct'):t('connection');
  infoTimezone.textContent=dest.timezoneDiff;
  infoSeason.textContent=dest.bestSeason;
  infoTransfer.textContent=dest.airportTransfer;
  infoTags.innerHTML=dest.tags.map(tag=>`<span class="info-tag">${tag}</span>`).join('') + `<span class="info-tag">Score ${getTripScore(dest)}</span>`
  + (activePreset!=='none'&&matchesPreset(dest)?`<span class="info-tag">${activePreset}</span>`:'')
- + (isFavorite(dest.name)?`<span class="info-tag">Favourite</span>`:'')
- + (isVisited(dest.name)?`<span class="info-tag">Visited</span>`:'')
- + (isWantToGo(dest.name)?`<span class="info-tag">Want to go</span>`:'');
+ + (isFavorite(dest.name)?`<span class="info-tag">${t('favourite')}</span>`:'')
+ + (isVisited(dest.name)?`<span class="info-tag">${t('visited')}</span>`:'')
+ + (isWantToGo(dest.name)?`<span class="info-tag">${t('wantToGo')}</span>`:'');
  infoNote.textContent=`${dest.weatherTag}. ${dest.note}`;
  infoCard.classList.remove('hidden');
  }
 
  function renderCompareColumn(dest){
- if(!dest) return `<div class="compare-name">Pick destination</div><div class="compare-price">—</div><div class="compare-stat">Choose a destination while compare mode is on.</div>`;
+ if(!dest) return `<div class="compare-name">${t('selectDestination')}</div><div class="compare-price">—</div><div class="compare-stat">${t('compareHintA')}</div>`;
  const icons=getTravelIcons(dest).map(item=>`<span class="compare-icon" title="${item.label}">${item.icon}</span>`).join('');
  return `<div class="compare-name">${dest.name}</div>
  <div class="compare-price">€${getCurrentPrice(dest)}</div>
  <div class="compare-icons">${icons}</div>
  <div class="compare-stat">
- <strong>Flight time:</strong> ${dest.durationLabel}<br>
- <strong>Trip score:</strong> ${getTripScore(dest)}/100<br>
- <strong>Preset match:</strong> ${activePreset==='none'?'None':matchesPreset(dest)?'Yes':'No'}<br>
- <strong>Flight type:</strong> ${dest.direct?'Direct':'Connection'}<br>
- <strong>Favourite:</strong> ${isFavorite(dest.name)?'Yes':'No'}<br>
- <strong>Visited:</strong> ${isVisited(dest.name)?'Yes':'No'}<br>
- <strong>Want to go:</strong> ${isWantToGo(dest.name)?'Yes':'No'}
+ <strong>${t('flightTime')}:</strong> ${dest.durationLabel}<br>
+ <strong>${t('tripScore')}:</strong> ${getTripScore(dest)}/100<br>
+ <strong>${t('presetMatch')}:</strong> ${activePreset==='none'?t('none'):matchesPreset(dest)?t('yes'):t('no')}<br>
+ <strong>${t('flightType')}:</strong> ${dest.direct?t('direct'):t('connection')}<br>
+ <strong>${t('favourite')}:</strong> ${isFavorite(dest.name)?t('yes'):t('no')}<br>
+ <strong>${t('visited')}:</strong> ${isVisited(dest.name)?t('yes'):t('no')}<br>
+ <strong>${t('wantToGo')}:</strong> ${isWantToGo(dest.name)?t('yes'):t('no')}
  </div>`;
  }
 
@@ -985,10 +1271,10 @@
  const [a,b]=comparedDestinations;
  if(!compareMode&&comparedDestinations.length===0){ compareCard.classList.add('hidden'); return; }
  compareCard.classList.remove('hidden');
- compareSub.textContent=compareMode?`${comparedDestinations.length}/2 selected`:comparedDestinations.length===2?'Comparison saved':'Choose two destinations';
+ compareSub.textContent=compareMode?`${comparedDestinations.length}/2 ${t('resultsFilters.0').toLowerCase()}`:comparedDestinations.length===2?t('compareTrips'):t('chooseTwoDestinations');
  compareA.innerHTML=renderCompareColumn(a);
  compareB.innerHTML=renderCompareColumn(b);
- compareFooter.textContent='Compare mode shows price, flight time, trip score, directness and tracker status side by side.';
+ compareFooter.textContent=t('compareFooter');
  }
 
  function toggleCompareSelection(dest){
@@ -1013,7 +1299,7 @@
  function showSurpriseToast(dest){
  surpriseDestinationName=dest.name;
  surpriseName.textContent=dest.name;
- surpriseMeta.textContent=`€${getCurrentPrice(dest)} · ${dest.durationLabel} · score ${getTripScore(dest)} · ${dest.direct?'Direct':'Connection'}`;
+ surpriseMeta.textContent=`€${getCurrentPrice(dest)} · ${dest.durationLabel} · score ${getTripScore(dest)} · ${dest.direct?t('direct'):t('connection')}`;
  surpriseToast.classList.remove('hidden');
  clearTimeout(surpriseTimer);
  surpriseTimer=setTimeout(()=>surpriseToast.classList.add('hidden'),4500);
@@ -1024,8 +1310,8 @@
  const visibleEntries=getVisibleEntries();
  if(!visibleEntries.length){
  surpriseDestinationName=null;
- surpriseName.textContent='No match';
- surpriseMeta.textContent='There are no visible destinations with your current filters.';
+ surpriseName.textContent=t('noMatch');
+ surpriseMeta.textContent=t('noMatchMeta');
  surpriseToast.classList.remove('hidden');
  clearTimeout(surpriseTimer);
  surpriseTimer=setTimeout(()=>surpriseToast.classList.add('hidden'),3500);
@@ -1196,7 +1482,7 @@
  ${dest.weatherTag}<br>
  ${dest.airportTransfer}<br>
  ${dest.note}<br>
- <span class="month-chip">Best: ${cheapestMonthLabel(dest)}</span>
+ <span class="month-chip">${t('best')}: ${cheapestMonthLabel(dest)}</span>
  <span class="season-chip">${dest.bestSeason}</span>
  <span class="currency-chip">${dest.currency}</span>
  <span class="cost-chip ${dest.costLevel.toLowerCase()}">${dest.costLevel}</span>
@@ -1209,10 +1495,10 @@
  </div>
  <div class="card-state-row">
  <div class="tracker-buttons">
- <button class="tracker-btn want ${isWantToGo(dest.name)?'active':''}" type="button" title="Want to go">📍 Want to go</button>
- <button class="tracker-btn visited ${isVisited(dest.name)?'active':''}" type="button" title="Visited">✅ Been</button>
+ <button class="tracker-btn want ${isWantToGo(dest.name)?'active':''}" type="button" title="Want to go">${t('wantButton')}</button>
+ <button class="tracker-btn visited ${isVisited(dest.name)?'active':''}" type="button" title="Visited">${t('beenButton')}</button>
  </div>
- <button class="favorite-btn ${isFavorite(dest.name)?'active':''}" type="button">${isFavorite(dest.name)?'♥ Saved':'♡ Save'}</button>
+ <button class="favorite-btn ${isFavorite(dest.name)?'active':''}" type="button">${isFavorite(dest.name)?t('savedButton'):t('save')}</button>
  </div>`;
 
  const entry={dest,marker,route,card};
@@ -1224,7 +1510,7 @@
  card.querySelector('.tracker-btn.visited').addEventListener('click',e=>{ e.stopPropagation(); toggleVisited(dest.name); });
  card.querySelector('.tracker-btn.want').addEventListener('click',e=>{ e.stopPropagation(); toggleWantToGo(dest.name); });
 
- const hoverHtml=()=>`<div class="hover-title">${dest.name}</div><div class="hover-meta">€${getCurrentPrice(dest)} · ${dest.durationLabel}<br>Score ${getTripScore(dest)} · ${dest.direct?'Direct':'Connection'}</div>`;
+ const hoverHtml=()=>`<div class="hover-title">${dest.name}</div><div class="hover-meta">€${getCurrentPrice(dest)} · ${dest.durationLabel}<br>Score ${getTripScore(dest)} · ${dest.direct?t('direct'):t('connection')}</div>`;
  card.addEventListener('mouseenter',e=>showHoverTooltip(hoverHtml(),e.clientX-mapShell.getBoundingClientRect().left,e.clientY-mapShell.getBoundingClientRect().top));
  card.addEventListener('mousemove',e=>showHoverTooltip(hoverHtml(),e.clientX-mapShell.getBoundingClientRect().left,e.clientY-mapShell.getBoundingClientRect().top));
  card.addEventListener('mouseleave',()=>hideHoverTooltip());
@@ -1302,7 +1588,7 @@
  function updateSummary(){
  const visibleEntries=getVisibleEntries();
  countValue.textContent=visibleEntries.length;
- if(resultsSummary) resultsSummary.textContent = visibleEntries.length ? `Showing ${visibleEntries.length} visible destination${visibleEntries.length===1?'':'s'}` : 'No destinations match your filters';
+ if(resultsSummary) resultsSummary.textContent = visibleEntries.length ? `${t('results')} · ${visibleEntries.length}` : t('noMatchMeta');
  if(!visibleEntries.length){ cheapestValue.textContent='—'; fastestValue.textContent='—'; return; }
  const cheapest=[...visibleEntries].sort((a,b)=>getCurrentPrice(a.dest)-getCurrentPrice(b.dest))[0].dest;
  const fastest=[...visibleEntries].sort((a,b)=>a.dest.durationMinutes-b.dest.durationMinutes)[0].dest;
@@ -1314,16 +1600,16 @@
 
  function updateLegend(){
  floatingMode.textContent=
- `${monthLabel(currentMonth)} · ${mode==='price'?'price mode':'duration mode'} · ${pathMode==='all'?'all paths on':'paths off unless selected'}`
- + `${directOnly?' · direct only':''}`
+ `${monthLabel(currentMonth)} · ${mode==='price'?t('priceMode'):t('durationMode')} · ${pathMode==='all'?t('allPathsOn'):t('pathsOffUnless')}`
+ + `${directOnly?` · ${t('directOnly')}`:''}`
  + `${budgetMax<700?` · under €${budgetMax}`:''}`
  + `${durationMax<800?` · under ${formatDuration(durationMax).replace(' max','')}`:''}`
- + `${activeFilter==='weekend'?' · weekend mode':''}`
+ + `${activeFilter==='weekend'?` · ${t('weekendMode')}`:''}`
  + `${activePreset!=='none'?` · ${activePreset}`:''}`
  + ` · sort: ${sortMode}`
- + `${heatEnabled?' · heatmap on':''}`
- + `${outlinesEnabled?' · outlines on':' · outlines off'}`
- + ` · plane animation on`;
+ + `${heatEnabled?` · ${t('heatmapOn')}`:''}`
+ + `${outlinesEnabled?` · ${t('outlinesOnLegend')}`:` · ${t('outlinesOffLegend')}`}`
+ + ` · ${t('planeAnimationOn')}`;
  }
 
  function updateFavoriteVisuals(){
@@ -1331,7 +1617,7 @@
  const fav=isFavorite(entry.dest.name);
  entry.card.classList.toggle('favorite-card',fav);
  const btn=entry.card.querySelector('.favorite-btn');
- if(btn){ btn.classList.toggle('active',fav); btn.textContent=fav?'♥ Saved':'♡ Save'; }
+ if(btn){ btn.classList.toggle('active',fav); btn.textContent=fav?t('savedButton'):t('save'); }
  });
  }
 
@@ -1346,10 +1632,10 @@
  const visitedBtn=entry.card.querySelector('.tracker-btn.visited');
  const wantBtn=entry.card.querySelector('.tracker-btn.want');
  const presetBadge=entry.card.querySelector('.preset-badge');
- if(visitedBtn) visitedBtn.classList.toggle('active',isVisited(name));
- if(wantBtn) wantBtn.classList.toggle('active',isWantToGo(name));
+ if(visitedBtn){ visitedBtn.classList.toggle('active',isVisited(name)); visitedBtn.textContent=t('beenButton'); }
+ if(wantBtn){ wantBtn.classList.toggle('active',isWantToGo(name)); wantBtn.textContent=t('wantButton'); }
  if(presetBadge){
- presetBadge.textContent=activePreset==='romantic'?'Romantic':activePreset==='boys'?'Boys trip':activePreset==='girls'?'Girls trip':'';
+ presetBadge.textContent=activePreset==='romantic'?t('presetButtons.1'):activePreset==='boys'?t('presetButtons.2'):activePreset==='girls'?t('presetButtons.3'):'';
  presetBadge.style.display=activePreset!=='none'&&matchesPreset(entry.dest)?'inline-flex':'none';
  }
  });
@@ -1487,10 +1773,13 @@
  outlinesOffBtn.addEventListener('click',()=>setOutlinesEnabled(false));
  sidebarToggle.addEventListener('click',()=>setSidebarCollapsed(true));
  sidebarReopen.addEventListener('click',()=>setSidebarCollapsed(false));
+ languageSelect.addEventListener('change',e=>{ currentLanguage=e.target.value; applyLanguage(); });
 
  setTheme(false);
  setCompareMode(false);
  updateCounts();
+ if(languageSelect) languageSelect.value=currentLanguage;
+ applyLanguage();
  updateVisibility();
  map.fitBounds(destinations.map(d=>d.coords),{padding:[40,40]});
  loadCountryOutlines();
